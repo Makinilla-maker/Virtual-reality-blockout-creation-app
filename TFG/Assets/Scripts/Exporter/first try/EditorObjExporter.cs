@@ -87,7 +87,28 @@ public class EditorObjExporter : MonoBehaviour
                 sw.Write(MeshToString(mf[i], materialList));
             }
         }
+        ExportMaterialFile(folder, filename, materialList);
+    }
+    void ExportMaterialFile(string folder, string filename, Dictionary<string, ObjMaterial> materialList)
+    {
+        using (StreamWriter sw = new StreamWriter(folder + "/" + filename + ".mtl"))
+        {
+            foreach (KeyValuePair<string, ObjMaterial> kvp in materialList)
+            {
+                sw.Write("\nnewmtl " + kvp.Key + "\n");
+                sw.Write("Ka 0.6 0.6 0.6\n"); // Default ambient color
+                sw.Write("Kd 1 1 1\n"); // Default diffuse color
+                sw.Write("Ks 0.9 0.9 0.9\n"); // Default specular color
+                sw.Write("d 1.0\n"); // Default opacity
+                sw.Write("illum 2\n"); // Default illumination model
 
+                if (kvp.Value.textureName != null)
+                {
+                    string textureFileName = Path.GetFileName(kvp.Value.textureName);
+                    sw.Write("map_Kd " + textureFileName + "\n"); // Diffuse texture
+                }
+            }
+        }
     }
     void Clear()
     {
