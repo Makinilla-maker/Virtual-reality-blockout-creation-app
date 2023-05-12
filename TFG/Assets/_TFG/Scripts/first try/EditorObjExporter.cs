@@ -7,6 +7,7 @@ using System.Text;
 using System;
 using Unity.Collections;
 using AsciiFBXExporter;
+using UnityEditor.Rendering.Universal;
 
 public class EditorObjExporter : MonoBehaviour
 {
@@ -19,20 +20,20 @@ public class EditorObjExporter : MonoBehaviour
     public int vertexOffset = 0;
     public int normalOffset = 0;
     public int uvOffset = 0;
-    public string targetFolder = "C:/Users/Makineta/Desktop/PitoCoño";
+    private string targetFolder;
     public string name = "ExporterObject";
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        if (Input.GetButtonDown("Fire3"))
-        {
-            if (!CreateFolder())
-                return;
-
-            StartExport(name);
-
-        }
+        targetFolder = Application.dataPath;
+        Debug.Log(targetFolder);
+    }
+    // Update is called once per frame
+    public void ExportGameObjects()
+    {
+        if (!CreateFolder())
+            return;
+        StartExport(name);       
     }
     bool CreateFolder()
     {
@@ -43,7 +44,7 @@ public class EditorObjExporter : MonoBehaviour
         }
         catch
         {
-            Debug.Log("Nanannanaanna");
+            Debug.Log(targetFolder);
             EditorUtility.DisplayDialog("Error!", "Failed to create target folder!", "");
             return false;
         }

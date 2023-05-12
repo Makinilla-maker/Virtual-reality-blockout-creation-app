@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
-using TMPro.EditorUtilities;
+//using TMPro.EditorUtilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -19,6 +19,7 @@ public class SpawnCube : MonoBehaviour
     //Inputs
     public InputActionProperty buttonClicked;
     public InputActionProperty joystickUp;
+    public InputActionProperty trigger;
 
     public GameObject cube;
     public Transform placeTransform;
@@ -48,8 +49,12 @@ public class SpawnCube : MonoBehaviour
     {
         float triggerValue = buttonClicked.action.ReadValue<float>();
         var joystickUpValue = joystickUp.action?.ReadValue<Vector2>() ?? Vector2.zero;
+        float export = trigger.action.ReadValue<float>();
 
-
+        if(export > .0f)
+        {
+            GameObject.Find("Model Exporter").GetComponent<EditorObjExporter>().ExportGameObjects();
+        }
         if(triggerValue > .0f && actionState == State.NONE)
         {
             selectedObject = Instantiate(cube, placeTransform);
@@ -92,6 +97,8 @@ public class SpawnCube : MonoBehaviour
     }
     GameObject CreateObject(GameObject go)
     {
-        return Instantiate(go, pos, Quaternion.identity);
+        GameObject inst = Instantiate(go, pos, Quaternion.identity);
+        inst.transform.tag = "ObjectToExport";
+        return inst;
     }
 }
