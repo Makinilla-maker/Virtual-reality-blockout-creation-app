@@ -45,7 +45,7 @@ public class EditorObjExporter : MonoBehaviour
         catch
         {
             Debug.Log(targetFolder);
-            EditorUtility.DisplayDialog("Error!", "Failed to create target folder!", "");
+            //EditorUtility.DisplayDialog("Error!", "Failed to create target folder!", "");
             return false;
         }
 
@@ -162,7 +162,9 @@ public class EditorObjExporter : MonoBehaviour
                 objMaterial.name = mats[material].name;
 
                 if (mats[material].mainTexture)
-                    objMaterial.textureName = AssetDatabase.GetAssetPath(mats[material].mainTexture);
+                {
+                    //objMaterial.textureName = AssetDatabase.GetAssetPath(mats[material].mainTexture);
+                }
                 else
                     objMaterial.textureName = null;
 
