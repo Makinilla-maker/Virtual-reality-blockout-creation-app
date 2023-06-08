@@ -13,50 +13,26 @@ public class VoxelRender : MonoBehaviour
 
     float adjScale;
 
-    List<Vector3> temp;
-
-
     private void Awake()
     {
         mesh = GetComponent<MeshFilter>().mesh;
         adjScale = scale * 0.5f;
-        temp = new List<Vector3>();
-        temp.Add(new Vector3(0,0,0));
-        temp.Add(new Vector3(1,0,0));
-        temp.Add(new Vector3(2,0,0));
-        temp.Add(new Vector3(3,0,0));
-        temp.Add(new Vector3(4,0,0));
-        temp.Add(new Vector3(4,0,1));
-        temp.Add(new Vector3(4,0,2));
-        temp.Add(new Vector3(4,0,3));
     }
     // Start is called before the first frame update
     void Start()
     {
-        GenerateVoxelMesh(new VoxelData(temp));
-        UpdateMesh();
     }
-    void GenerateVoxelMesh(VoxelData data)
+    public void GenerateVoxelMesh(List<Vector3> vectgorPos)
     {
+        VoxelData voxelData = new VoxelData(vectgorPos);
         vertices = new List<Vector3>();
         triangles = new List<int>();
 
-        //for (int z = 0; z < data.Depth; z++)
-        //{
-        //    for (int x = 0; x < data.Width; x++)
-        //    {
-        //        Debug.Log("Z == " + z + "      " + "X == " + x + "      " + "data.Depth == " + data.Depth + "    data.Width == " + data.Width + "data.GetCell(" + x + "," + z +") = " +  data.GetCell(x, z));
-        //        if (data.GetCell(x, z) == 0)
-        //        {
-        //            continue;
-        //        }
-        //        MakeCube(adjScale, new Vector3((float)x * scale, 0, (float)z * scale),data);
-        //    }
-        //}
-        for (int i = 0; i < temp.Count; i++)
+        for (int i = 0; i < vectgorPos.Count; i++)
         {
-            MakeCube(adjScale, temp[i] * scale, data);
+            MakeCube(adjScale, vectgorPos[i] * scale, voxelData);
         }
+        UpdateMesh();
     }
     void MakeCube(float cubeScale, Vector3 cubePos, VoxelData data)
     {
@@ -81,7 +57,7 @@ public class VoxelRender : MonoBehaviour
         triangles.Add(vCount + 2);
         triangles.Add(vCount + 3);
     }
-    void UpdateMesh()
+    public void UpdateMesh()
     {
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
