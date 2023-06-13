@@ -280,12 +280,15 @@ public class SpawnCube : MonoBehaviour
         int mx = 0;
         int mz = 0;
 
-        if (cubes[1].transform.position.x > cubes[0].transform.position.x)  mx = 1;
-        else if (cubes[1].transform.position.x < cubes[0].transform.position.x) mx = -1;
+        if (cubes[1].transform.position.x > cubes[0].transform.position.x)
+            mx = 1;
+        else if (cubes[1].transform.position.x < cubes[0].transform.position.x)
+            mx = -1;
 
-
-        if (cubes[1].transform.position.z > cubes[0].transform.position.z) mz = 1;
-        else if (cubes[1].transform.position.z < cubes[0].transform.position.z) mz = -1;
+        if (cubes[1].transform.position.z > cubes[0].transform.position.z)
+            mz = 1;
+        else if (cubes[1].transform.position.z < cubes[0].transform.position.z)
+            mz = -1;
 
         cubePosition = CreateMeshVoxel(mx,mz);
         
@@ -304,51 +307,15 @@ public class SpawnCube : MonoBehaviour
     List<Vector3> CreateMeshVoxel(int mx, int mz)
     {
         List<Vector3> cubePosition = new List<Vector3>();
-        if(mx > 0)
-        {
-            for (int x = 0; x <= (Mathf.Abs(cubes[1].transform.position.x) - Mathf.Abs(cubes[0].transform.position.x)) * mx; x += mx)
-            {
-                if(mz > 0)
-                {
-                    for (int z = 0; z <= (Mathf.Abs(cubes[1].transform.position.z) - Mathf.Abs(cubes[0].transform.position.z)) * mz; z += mz)
-                    {
-                        cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
-                    }
-                }
-                else
-                {
-                    for (int z = 0; z >= (Mathf.Abs(cubes[1].transform.position.z) - Mathf.Abs(cubes[0].transform.position.z)) * mz; z += mz)
-                    {
-                        cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
-                    }
-                }
-                
-            }
 
-        }
-        else
+        for (int x = 0; Mathf.Abs(x) <= Mathf.Abs(cubes[1].transform.position.x - cubes[0].transform.position.x); x += mx)
         {
-            for (int x = 0; x >= (Mathf.Abs(cubes[1].transform.position.x) - Mathf.Abs(cubes[0].transform.position.x)) * mx; x += mx)
+            for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
             {
-                if (mz > 0)
-                {
-                
-                    for (int z = 0; z <= (Mathf.Abs(cubes[1].transform.position.z) - Mathf.Abs(cubes[0].transform.position.z)) * mz; z += mz)
-                    {
-                        cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
-                    }
-                }
-                else
-                {
-                    for (int z = 0; z >= (Mathf.Abs(cubes[1].transform.position.z) - Mathf.Abs(cubes[0].transform.position.z)) * mz; z += mz)
-                    {
-                        cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
-                    }
-                    
-                }
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
             }
-            
         }
+
         return cubePosition;
     }
     GameObject CreateObject(GameObject go, Vector3 pos)
