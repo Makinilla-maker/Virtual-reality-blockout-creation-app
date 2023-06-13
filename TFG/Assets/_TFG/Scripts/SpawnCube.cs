@@ -308,11 +308,28 @@ public class SpawnCube : MonoBehaviour
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
-        for (int x = 0; Mathf.Abs(x) <= Mathf.Abs(cubes[1].transform.position.x - cubes[0].transform.position.x); x += mx)
+        if (mx != 0 && mz != 0)
+        {
+            for (int x = 0; Mathf.Abs(x) <= Mathf.Abs(cubes[1].transform.position.x - cubes[0].transform.position.x); x += mx)
+            {
+                for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
+                {
+                    cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
+                }
+            }
+        }
+        else if (mx != 0)
+        {
+            for (int x = 0; Mathf.Abs(x) <= Mathf.Abs(cubes[1].transform.position.x - cubes[0].transform.position.x); x += mx)
+            {
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z));
+            }
+        }
+        else if (mz != 0)
         {
             for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
             {
-                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x, 0.5f, cubes[0].transform.position.z + z));
             }
         }
 
