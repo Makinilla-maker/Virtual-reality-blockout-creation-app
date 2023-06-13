@@ -17,6 +17,13 @@ public enum State
     RISING,
     CREATING,
 }
+public enum Mode
+{
+    NONE,
+    CUBE,
+    MESH,
+    MATERIALS,
+}
 
 public class SpawnCube : MonoBehaviour
 {
@@ -34,6 +41,7 @@ public class SpawnCube : MonoBehaviour
     public LineRenderer lineRenderer;
 
     public State actionState;
+    public Mode modeState;
 
     public List<GameObject> cubes;
 
@@ -63,6 +71,22 @@ public class SpawnCube : MonoBehaviour
         scalling = false;
         firstCubePlaced = false;
     }
+    public void SetMode(string modeName)
+    {
+        switch(modeName)
+        {
+            case "CUBE":
+                modeState = Mode.CUBE;
+                break;
+            case "MESH":
+                modeState = Mode.MESH;
+                break;
+            case "MATERIALS":
+                modeState = Mode.MATERIALS;
+                break;
+        }
+
+    }
 
     // Update is called once per frame
     void Update()
@@ -71,7 +95,7 @@ public class SpawnCube : MonoBehaviour
         var joystickUpValue = joystickUp.action?.ReadValue<Vector2>() ?? Vector2.zero;
         float export = trigger.action.ReadValue<float>();
 
-        if(triggerValue > .0f && actionState == State.NONE)
+        if((modeState == Mode.CUBE || modeState == Mode.MESH) && actionState == State.NONE)
         {
             selectedObject = Instantiate(cube, placeTransform);
             selectedObject.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
@@ -81,16 +105,30 @@ public class SpawnCube : MonoBehaviour
         if ((actionState == State.SELECTED || actionState == State.PLACING))
         {
             lineRenderer.enabled = true;
-            //CreatingCustomMesh(export);
-            CreatingBigCube(export);
+            switch(modeState)
+            {
+                case Mode.CUBE:
+                    CreatingBigCube(export);
+                    break;
+                case Mode.MESH:
+                    CreatingCustomMesh(export);
+                    break;
+            }            
 
         }
         if (actionState == State.PLACING && export < .1f)
         {
             actionState = State.CREATING;
 
-            //CreatingVoxel1();
-            CreatingVoxel2();
+            switch (modeState)
+            {
+                case Mode.CUBE:
+                    CreatingVoxel2();
+                    break;
+                case Mode.MESH:
+                    CreatingVoxel1();
+                    break;
+            }
 
             actionState = State.SELECTED;
         }
