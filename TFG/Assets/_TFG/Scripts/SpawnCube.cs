@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.XR.Haptics;
 using UnityEngine.UIElements;
 
 public enum State
@@ -16,6 +17,7 @@ public enum State
     PLACING,
     RISING,
     CREATING,
+    OBJECT_CREATED,
 }
 public enum Mode
 {
@@ -23,6 +25,7 @@ public enum Mode
     CUBE,
     MESH,
     MATERIALS,
+    LIGHT,
 }
 
 public class SpawnCube : MonoBehaviour
@@ -61,6 +64,8 @@ public class SpawnCube : MonoBehaviour
     public bool customMeshCheck;
     public bool materialMode;
 
+    public MenuManager gridSize;
+
 
     // Start is called before the first frame update
     void Start()
@@ -75,6 +80,10 @@ public class SpawnCube : MonoBehaviour
     {
         switch(modeName)
         {
+            case "NONE":
+                modeState = Mode.NONE;
+                
+                break;
             case "CUBE":
                 modeState = Mode.CUBE;
                 break;
@@ -95,6 +104,11 @@ public class SpawnCube : MonoBehaviour
         var joystickUpValue = joystickUp.action?.ReadValue<Vector2>() ?? Vector2.zero;
         float export = trigger.action.ReadValue<float>();
 
+        if(modeState == Mode.NONE)
+        {
+            actionState = State.NONE;
+            Destroy(selectedObject);
+        }
         if((modeState == Mode.CUBE || modeState == Mode.MESH) && actionState == State.NONE)
         {
             selectedObject = Instantiate(cube, placeTransform);
@@ -116,6 +130,10 @@ public class SpawnCube : MonoBehaviour
             }            
 
         }
+        if(joystickUpValue.y > .1f)
+        {
+            Debug.Log(joystickUpValue.y);
+        }
         if (actionState == State.PLACING && export < .1f)
         {
             actionState = State.CREATING;
@@ -130,31 +148,35 @@ public class SpawnCube : MonoBehaviour
                     break;
             }
 
-            actionState = State.SELECTED;
+            actionState = State.RISING;
         }
         if(actionState == State.RISING)
         {
-            scalling = true;
+            scalling = false;
+            float yScale = GetCubeHeight(transform.position);
 
-            Vector3 newScale = new Vector3(0, 1, 0);
+            Vector3 newScale = voxel.transform.localScale;
+            newScale.y = RoundFloat(yScale,1f);
+            voxel.transform.localScale = newScale;
             //StartCoroutine(ScaleUp());
-            RaycastHit hit;
-            if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
-            {
-                Debug.DrawLine(transform.position, hit.point);
-
-                if (!hit.transform.CompareTag("ObjectToExport"))
-                    voxel.transform.localScale += newScale;
-                else
-                    Debug.Log("noHit");
-            }
-            Debug.Log("LIGMAIKASJDIAJIDJASIDJHAUSDHUASDHJIASHDIASJ");
-            //actionState = State.NONE;
+            
         }
+        if(actionState == State.RISING && export > .1f)
+        {
+            actionState = State.OBJECT_CREATED;
+        }
+        if(actionState == State.OBJECT_CREATED && export < .1f)
+        {
+            actionState = State.SELECTED;
+        }     
         if (selectedObject != null)
         {
             selectedObject.gameObject.transform.position = placeTransform.position;
             selectedObject.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+        }
+        if(modeState == Mode.LIGHT)
+        {
+
         }
     }
     IEnumerator ScaleUp()
@@ -162,10 +184,18 @@ public class SpawnCube : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity) && !scalling)
         {
-            Vector3 newScale = new Vector3(0, 1, 0);
             while (!hit.transform.CompareTag("ObjectToExport"))
             {
-                voxel.transform.localScale += newScale;
+                voxel.transform.localScale += new Vector3(0, 1, 0);
+                if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+                {
+                    // Se realiza una nueva verificación de colisión en cada iteración
+                }
+                else
+                {
+                    // Manejar el caso en el que no hay colisión
+                    break;
+                }
             }
         }
         scalling = false;
@@ -183,9 +213,12 @@ public class SpawnCube : MonoBehaviour
 
             Vector3 pos;
             pos = hit.point;
-            pos.x = Mathf.RoundToInt(pos.x / 1f) * 1f;
-            pos.y = (Mathf.RoundToInt(pos.y / 1f) * 1f) + 0.5f;
-            pos.z = Mathf.RoundToInt(pos.z / 1f) * 1f;
+            pos.x = RoundFloat(pos.x, gridSize.gridSize);
+            pos.y = RoundFloat(pos.y, 0.5f);
+            pos.z = RoundFloat(pos.z, gridSize.gridSize);
+            //pos.x = Mathf.RoundToInt(pos.x / 1f) * 1f;
+            //pos.y = (Mathf.RoundToInt(pos.y / 1f) * 1f) + 0.5f;
+            //pos.z = Mathf.RoundToInt(pos.z / 1f) * 1f;
             //transform.position = pos;
 
 
@@ -206,6 +239,12 @@ public class SpawnCube : MonoBehaviour
             Debug.Log("No collision detected.");
         }
     }
+
+    float RoundFloat(float valueToRound, float valeRounded)
+    {
+        float value;
+        return value = Mathf.RoundToInt(valueToRound / gridSize.gridSize) * valeRounded;
+    }
     void CreatingBigCube(float export)
     {
         RaycastHit hit;
@@ -217,9 +256,9 @@ public class SpawnCube : MonoBehaviour
 
             Vector3 pos;
             pos = hit.point;
-            pos.x = Mathf.RoundToInt(pos.x / 1f) * 1f;
-            pos.y = (Mathf.RoundToInt(pos.y / 1f) * 1f) + 0.5f;
-            pos.z = Mathf.RoundToInt(pos.z / 1f) * 1f;
+            pos.x = RoundFloat(pos.x, gridSize.gridSize);
+            pos.y = RoundFloat(pos.y,1f);
+            pos.z = RoundFloat(pos.z, gridSize.gridSize);
             //transform.position = pos;
 
 
@@ -334,6 +373,13 @@ public class SpawnCube : MonoBehaviour
         }
 
         return cubePosition;
+    }
+    float GetCubeHeight(Vector3 controllerPosition)
+    {
+        float desiredHeight = controllerPosition.y; // Obtener la altura deseada del controlador de realidad virtual
+        float groundHeight = 0.0f; // Altura del suelo predefinida si no hay colisión
+
+        return groundHeight + desiredHeight; // Sumar la altura deseada a la altura del suelo
     }
     GameObject CreateObject(GameObject go, Vector3 pos)
     {
