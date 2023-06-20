@@ -5,10 +5,12 @@ using System.Net.NetworkInformation;
 using Unity.VisualScripting;
 //using TMPro.EditorUtilities;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.XR.Haptics;
 using UnityEngine.UIElements;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public enum State
 {
@@ -47,10 +49,11 @@ public class SpawnCube : MonoBehaviour
     public Mode modeState;
 
     public List<GameObject> cubes;
+    public GameObject light;
 
     //Provisional
-
-    GameObject selectedObject;
+    public GameObject selectedObject;
+    GameObject objectToInstantiate;
     GameObject objectToPlace;
     public GameObject voxelPrfab;
     GameObject voxel;
@@ -82,7 +85,8 @@ public class SpawnCube : MonoBehaviour
         {
             case "NONE":
                 modeState = Mode.NONE;
-                
+                actionState = State.NONE;
+                Destroy(objectToInstantiate);
                 break;
             case "CUBE":
                 modeState = Mode.CUBE;
@@ -92,6 +96,13 @@ public class SpawnCube : MonoBehaviour
                 break;
             case "MATERIALS":
                 modeState = Mode.MATERIALS;
+                actionState = State.NONE;
+                Destroy(objectToInstantiate);
+                break;
+            case "LIGHT":
+                modeState = Mode.LIGHT;
+                actionState = State.NONE;
+                Destroy(objectToInstantiate);
                 break;
         }
 
@@ -103,105 +114,100 @@ public class SpawnCube : MonoBehaviour
         float triggerValue = buttonClicked.action.ReadValue<float>();
         var joystickUpValue = joystickUp.action?.ReadValue<Vector2>() ?? Vector2.zero;
         float export = trigger.action.ReadValue<float>();
-
-        if(modeState == Mode.NONE)
+        if (modeState == Mode.CUBE || modeState == Mode.MESH)
         {
-            actionState = State.NONE;
-            Destroy(selectedObject);
-        }
-        if((modeState == Mode.CUBE || modeState == Mode.MESH) && actionState == State.NONE)
-        {
-            selectedObject = Instantiate(cube, placeTransform);
-            selectedObject.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-
-            actionState = State.SELECTED;
-        }
-        if ((actionState == State.SELECTED || actionState == State.PLACING))
-        {
-            lineRenderer.enabled = true;
-            switch(modeState)
+            if (actionState == State.NONE)
             {
-                case Mode.CUBE:
-                    CreatingBigCube(export);
-                    break;
-                case Mode.MESH:
-                    CreatingCustomMesh(export);
-                    break;
-            }            
+                objectToInstantiate = Instantiate(cube, placeTransform);
+                objectToInstantiate.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
 
-        }
-        if(joystickUpValue.y > .1f)
-        {
-            Debug.Log(joystickUpValue.y);
-        }
-        if (actionState == State.PLACING && export < .1f)
-        {
-            actionState = State.CREATING;
-
-            switch (modeState)
+                actionState = State.SELECTED;
+            }
+            if ((actionState == State.SELECTED || actionState == State.PLACING))
             {
-                case Mode.CUBE:
-                    CreatingVoxel2();
-                    break;
-                case Mode.MESH:
-                    CreatingVoxel1();
-                    break;
+                lineRenderer.enabled = true;
+                switch (modeState)
+                {
+                    case Mode.CUBE:
+                        CreatingBigCube(export);
+                        break;
+                    case Mode.MESH:
+                        CreatingCustomMesh(export);
+                        break;
+                }
+            }
+            if (actionState == State.PLACING && export < .1f)
+            {
+                actionState = State.CREATING;
+
+                switch (modeState)
+                {
+                    case Mode.CUBE:
+                        CreatingVoxel2();
+                        break;
+                    case Mode.MESH:
+                        CreatingVoxel1();
+                        break;
+                }
+
+                actionState = State.RISING;
+            }
+            if (actionState == State.RISING)
+            {
+                scalling = false;
+                float yScale = GetCubeHeight(transform.position);
+
+                Vector3 newScale = voxel.transform.localScale;
+                newScale.y = RoundFloat(yScale, 1f);
+                voxel.transform.localScale = newScale;
+                //StartCoroutine(ScaleUp());
+
+            }
+            if (actionState == State.RISING && export > .1f)
+            {
+                actionState = State.OBJECT_CREATED;
+            }
+            if (actionState == State.OBJECT_CREATED && export < .1f)
+            {
+                actionState = State.SELECTED;
             }
 
-            actionState = State.RISING;
+            if (joystickUpValue.y > .1f)
+            {
+                Debug.Log(joystickUpValue.y);
+            }
         }
-        if(actionState == State.RISING)
+        else if (modeState == Mode.LIGHT)
         {
-            scalling = false;
-            float yScale = GetCubeHeight(transform.position);
-
-            Vector3 newScale = voxel.transform.localScale;
-            newScale.y = RoundFloat(yScale,1f);
-            voxel.transform.localScale = newScale;
-            //StartCoroutine(ScaleUp());
-            
+            if (export > .1f)
+            {
+                light.transform.parent = null;
+            }
         }
-        if(actionState == State.RISING && export > .1f)
+        else if (modeState == Mode.MATERIALS || modeState == Mode.NONE)
         {
-            actionState = State.OBJECT_CREATED;
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+            {
+                Debug.DrawLine(transform.position, hit.point);
+                Debug.Log(hit.transform.tag);
+                if(export > .1f && hit.transform.tag == "ObjectToExport")
+                {
+                    selectedObject = hit.transform.gameObject;
+                }
+            }
         }
-        if(actionState == State.OBJECT_CREATED && export < .1f)
+        if (objectToInstantiate != null)
         {
-            actionState = State.SELECTED;
-        }     
-        if (selectedObject != null)
-        {
-            selectedObject.gameObject.transform.position = placeTransform.position;
-            selectedObject.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
-        }
-        if(modeState == Mode.LIGHT)
-        {
-
+            objectToInstantiate.gameObject.transform.position = placeTransform.position;
+            objectToInstantiate.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
         }
     }
-    IEnumerator ScaleUp()
+
+    public void SetLight(GameObject l)
     {
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity) && !scalling)
-        {
-            while (!hit.transform.CompareTag("ObjectToExport"))
-            {
-                voxel.transform.localScale += new Vector3(0, 1, 0);
-                if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
-                {
-                    // Se realiza una nueva verificación de colisión en cada iteración
-                }
-                else
-                {
-                    // Manejar el caso en el que no hay colisión
-                    break;
-                }
-            }
-        }
-        scalling = false;
-        yield return new WaitForSeconds(0f);
+        light = l;
     }
-
     void CreatingCustomMesh(float export)
     {
         RaycastHit hit;
@@ -280,8 +286,6 @@ public class SpawnCube : MonoBehaviour
                     lastCube.gameObject.transform.position = pos;
                     objectToPlace.gameObject.transform.localScale = new Vector3(1, 1, 1);
                 }
-                
-
                 actionState = State.PLACING;
             }
 
@@ -333,6 +337,7 @@ public class SpawnCube : MonoBehaviour
         
         Debug.Log("Creating Voxel");
         voxel.GetComponent<VoxelRender>().GenerateVoxelMesh(cubePosition);
+        voxel.AddComponent<BoxCollider>();
 
         foreach (GameObject cube in cubes)
         {

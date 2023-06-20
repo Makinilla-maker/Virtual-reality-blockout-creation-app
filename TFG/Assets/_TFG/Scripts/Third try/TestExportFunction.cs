@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 public class TestExportFunction : MonoBehaviour
 {
-    public bool onlySelectedObjects = false;
+    public bool onlyobjectToInstantiates = false;
     public bool applyPosition = true;
     public bool applyRotation = true;
     public bool applyScale = true;
@@ -104,7 +104,7 @@ public class TestExportFunction : MonoBehaviour
         string baseFileName = System.IO.Path.GetFileNameWithoutExtension(exportPath);
         //get list of required export things
         MeshFilter[] sceneMeshes;
-        if (onlySelectedObjects)
+        if (onlyobjectToInstantiates)
         {
             List<MeshFilter> tempMFList = new List<MeshFilter>();
             foreach (GameObject g in GameObject.FindGameObjectsWithTag("Block"))

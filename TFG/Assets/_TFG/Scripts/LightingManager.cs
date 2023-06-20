@@ -8,9 +8,12 @@ public class LightingManager : MonoBehaviour
     public Slider slider;
     GameObject directionalLight;
     public GameObject instanciatedLight;
+
+    public SpawnCube sc;
     private void Start()
     {
         directionalLight = GameObject.Find("Directional Light");
+        sc = GameObject.FindObjectOfType<SpawnCube>();
     }
 
     public void SetSkybox(Material skybox)
@@ -26,7 +29,11 @@ public class LightingManager : MonoBehaviour
     public void SpawnLight(GameObject light)
     {
         GameObject hand = FindObjectOfType<SpawnCube>().gameObject;
+
         instanciatedLight = Instantiate(light, hand.transform);
+
+        sc.SetMode("LIGHT");
+        sc.SetLight(instanciatedLight);
     }
 
 }
