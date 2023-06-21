@@ -29,6 +29,7 @@ public enum Mode
     MESH,
     MATERIALS,
     LIGHT,
+    DELETE,
 }
 
 public class SpawnCube : MonoBehaviour
@@ -43,6 +44,7 @@ public class SpawnCube : MonoBehaviour
     public GameObject cillinder;
     public GameObject voxelPrfab;
     public Transform placeTransform;
+    public Material materialOnceCreated;
 
     public float objectOffset;
 
@@ -105,6 +107,8 @@ public class SpawnCube : MonoBehaviour
                 break;
             case "MESH":
                 modeState = Mode.MESH;
+                actionState = State.NONE;
+                Destroy(objectToInstantiate);
                 break;
             case "MATERIALS":
                 modeState = Mode.MATERIALS;
@@ -113,6 +117,11 @@ public class SpawnCube : MonoBehaviour
                 break;
             case "LIGHT":
                 modeState = Mode.LIGHT;
+                actionState = State.NONE;
+                Destroy(objectToInstantiate);
+                break;
+            case "DELETE":
+                modeState = Mode.DELETE;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
                 break;
@@ -134,13 +143,14 @@ public class SpawnCube : MonoBehaviour
                 if (modeState == Mode.CUBE || modeState == Mode.MESH)
                 {
                     objectToInstantiate = Instantiate(cube, placeTransform);
-                    objectToInstantiate.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
+                    objectToInstantiate.gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
 
                 }
                 else if (modeState == Mode.CILLINDER)
                 {
                     objectToInstantiate = Instantiate(cillinder, placeTransform);
                     objectToInstantiate.gameObject.transform.localScale = new Vector3(2f, 2f, 2f);
+                    objectToInstantiate.gameObject.transform.rotation = cillinder.transform.rotation;
                 }
 
                 actionState = State.SELECTED;
@@ -164,7 +174,7 @@ public class SpawnCube : MonoBehaviour
             }
             if (actionState == State.PLACING && export < .1f)
             {
-                actionState = State.CREATING;
+                //actionState = State.CREATING;
 
                 switch (modeState)
                 {
@@ -227,6 +237,23 @@ public class SpawnCube : MonoBehaviour
                 }
             }
         }
+        else if(modeState == Mode.DELETE)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+            {
+                if(hit.transform.tag != "Floor")
+                {
+                    SetOutlineShader(hit.transform.gameObject);
+                    if(export > .1)
+                    {
+                        Debug.Log("_____________________________________________________________________");
+                        allObjects.Remove(hit.transform.gameObject);
+                        Destroy(hit.transform.gameObject);
+                    }
+                }
+            }
+        }
         if (objectToInstantiate != null)
         {
             //objectToInstantiate.gameObject.transform.position = placeTransform.position;
@@ -242,12 +269,10 @@ public class SpawnCube : MonoBehaviour
         }
         so.layer = 3;
     }
-
     public void SetLight(GameObject l)
     {
         light = l;
-    }
-    
+    }    
     void SettingCillinder(float export)
     {
         RaycastHit hit;
@@ -265,13 +290,13 @@ public class SpawnCube : MonoBehaviour
             //transform.position = pos;
 
 
-            if (!hit.transform.CompareTag("ObjectToExport") && export > .0f)
+            if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
             {
                 if (!firstCillinder)
                 {
                     firstCillinder = true;
                     Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-                    objectToPlace = CreateObject(cillinder, pos);
+                    objectToPlace = CreateObject(cillinder, pos, "ObjectPlacing");
                     objectToPlace.gameObject.transform.position = pos;
                     objectToPlace.gameObject.transform.localScale = new Vector3(10, 10, 10);
                 }
@@ -294,10 +319,14 @@ public class SpawnCube : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
         {
+            Debug.DrawLine(transform.position, hit.point);
+            Debug.Log(hit.transform.position);
+            Debug.Log(objectToPlace.transform.position);
+            Debug.Log((hit.transform.position - objectToPlace.transform.position).magnitude);
             float radius = Mathf.Abs((hit.transform.position - objectToPlace.transform.position).magnitude);
             Vector3 scale = objectToPlace.transform.localScale;
             scale.x = radius * 2; // Double the radius to set the diameter
-            scale.z = radius * 2; // Double the radius to set the diameter
+            scale.y = radius * 2; // Double the radius to set the diameter
             objectToPlace.transform.localScale = scale;
         }
     }
@@ -321,10 +350,10 @@ public class SpawnCube : MonoBehaviour
             //transform.position = pos;
 
 
-            if (!hit.transform.CompareTag("ObjectToExport") && export > .0f)
+            if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
             {
                 Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-                objectToPlace = CreateObject(cube, pos);
+                objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
                 objectToPlace.gameObject.transform.position = pos;
                 objectToPlace.gameObject.transform.localScale = new Vector3(1, 1, 1);
                 cubes.Add(objectToPlace.gameObject);
@@ -338,7 +367,6 @@ public class SpawnCube : MonoBehaviour
             Debug.Log("No collision detected.");
         }
     }
-
     float RoundFloat(float valueToRound, float valeRounded)
     {
         float value;
@@ -361,23 +389,23 @@ public class SpawnCube : MonoBehaviour
             //transform.position = pos;
 
 
-            if (!hit.transform.CompareTag("ObjectToExport") && export > .0f)
+            if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
             {
                 if(!firstCubePlaced)
                 {
                     firstCubePlaced = true;
                     Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-                    objectToPlace = CreateObject(cube, pos);
+                    objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
                     objectToPlace.gameObject.transform.position = pos;
-                    objectToPlace.gameObject.transform.localScale = new Vector3(1, 1, 1);
+                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
                     cubes.Add(objectToPlace.gameObject);
-                    lastCube = CreateObject(cube, pos);
+                    lastCube = CreateObject(cube, pos, "ObjectPlacing");
                     cubes.Add(lastCube.gameObject);
                 }
                 else
                 {
                     lastCube.gameObject.transform.position = pos;
-                    objectToPlace.gameObject.transform.localScale = new Vector3(1, 1, 1);
+                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
                 }
                 actionState = State.PLACING;
             }
@@ -392,7 +420,7 @@ public class SpawnCube : MonoBehaviour
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
-        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0));
+        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0), "ObjectToExport");
 
         foreach (GameObject cube in cubes)
         {
@@ -402,6 +430,7 @@ public class SpawnCube : MonoBehaviour
 
         Debug.Log("Creating Voxel");
         voxel.GetComponent<VoxelRender>().GenerateVoxelMesh(cubePosition);
+        voxel.GetComponent<MeshRenderer>().material = materialOnceCreated;
         allObjects.Add(voxel);
         cubePosition.Clear();
         cubes.Clear();
@@ -410,7 +439,14 @@ public class SpawnCube : MonoBehaviour
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
-        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0));
+        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0),"ObjectToExport");
+
+        if (cubes[1].transform.position.y < cubes[0].transform.position.y)
+        {
+            GameObject go = cubes[0];
+            cubes[0] = cubes[1];
+            cubes[1] = go;
+        }
 
         Debug.Log(cubes[1].transform.position);
         int mx = 0;
@@ -430,6 +466,7 @@ public class SpawnCube : MonoBehaviour
         
         Debug.Log("Creating Voxel");
         voxel.GetComponent<VoxelRender>().GenerateVoxelMesh(cubePosition);
+        voxel.GetComponent<MeshRenderer>().material = materialOnceCreated;
         voxel.AddComponent<BoxCollider>();
         allObjects.Add(voxel);
 
@@ -452,7 +489,7 @@ public class SpawnCube : MonoBehaviour
             {
                 for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
                 {
-                    cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z + z));
+                    cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, cubes[0].transform.position.y + 0.5f, cubes[0].transform.position.z + z));
                 }
             }
         }
@@ -460,14 +497,14 @@ public class SpawnCube : MonoBehaviour
         {
             for (int x = 0; Mathf.Abs(x) <= Mathf.Abs(cubes[1].transform.position.x - cubes[0].transform.position.x); x += mx)
             {
-                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, 0.5f, cubes[0].transform.position.z));
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, cubes[0].transform.position.y + 0.5f, cubes[0].transform.position.z));
             }
         }
         else if (mz != 0)
         {
             for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
             {
-                cubePosition.Add(new Vector3(cubes[0].transform.position.x, 0.5f, cubes[0].transform.position.z + z));
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x, cubes[0].transform.position.y + 0.5f, cubes[0].transform.position.z + z));
             }
         }
 
@@ -480,16 +517,10 @@ public class SpawnCube : MonoBehaviour
 
         return groundHeight + desiredHeight; // Sumar la altura deseada a la altura del suelo
     }
-    GameObject CreateObject(GameObject go, Vector3 pos)
+    GameObject CreateObject(GameObject go, Vector3 pos, string tag)
     {
-        GameObject inst = Instantiate(go, pos, Quaternion.identity);
-        inst.transform.tag = "ObjectToExport";
+        GameObject inst = Instantiate(go, pos, go.transform.rotation);
+        inst.transform.tag = tag;
         return inst;
-    }
-    bool CheckIfExists(RaycastHit hit)
-    {
-        if(hit.transform.tag == "ObjectToExport")
-            return true;
-        return false;
     }
 }

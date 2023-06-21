@@ -5,11 +5,14 @@ using UnityEngine;
 
 public class MenuManager : MonoBehaviour
 {
-    public GameObject objectsMenu;
-    public GameObject materialMenu;
-    public GameObject lightMenu;
-    public GameObject facilityMenu;
+    GameObject objectsMenu;
+    GameObject materialMenu;
+    GameObject lightMenu;
+    GameObject facilityMenu;
     public List<GameObject> menus = new List<GameObject>();
+    public List<SpriteRenderer> sprites = new List<SpriteRenderer>();
+    public CanvasGroup cg;
+    float oldAlpha;
 
     public TMP_Text gridText;
     public int gridSize;
@@ -29,6 +32,23 @@ public class MenuManager : MonoBehaviour
         //materialMenu.SetActive(false);
         //lightMenu.SetActive(false);
         //facilityMenu.SetActive(false);
+    }
+    public void Update()
+    {
+        //if(cg.alpha != oldAlpha)
+        //{
+        //    cg.alpha = oldAlpha;
+        //    SetAlpha(cg.alpha);
+        //}
+    }
+    void SetAlpha(float alpha)
+    {
+        foreach(SpriteRenderer spriteRenderer in sprites)
+        {
+            Color color = spriteRenderer.material.color;
+            color.a = alpha;
+            spriteRenderer.material.SetColor("ChangedAlpha",color);
+        }
     }
     public void SetScreens(GameObject screen)
     {
