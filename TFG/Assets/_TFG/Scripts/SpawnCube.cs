@@ -439,14 +439,14 @@ public class SpawnCube : MonoBehaviour
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
-        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0),"ObjectToExport");
-
         if (cubes[1].transform.position.y < cubes[0].transform.position.y)
         {
             GameObject go = cubes[0];
             cubes[0] = cubes[1];
             cubes[1] = go;
         }
+
+        voxel = CreateObject(voxelPrfab, cubes[0].transform.position, "ObjectToExport");
 
         Debug.Log(cubes[1].transform.position);
         int mx = 0;
@@ -489,7 +489,7 @@ public class SpawnCube : MonoBehaviour
             {
                 for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
                 {
-                    cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, cubes[0].transform.position.y + 0.5f, cubes[0].transform.position.z + z));
+                    cubePosition.Add(new Vector3(cubes[0].transform.position.x + x - voxel.transform.position.x, cubes[0].transform.position.y + 0.5f - voxel.transform.position.y, cubes[0].transform.position.z + z - voxel.transform.position.z));
                 }
             }
         }
@@ -497,14 +497,14 @@ public class SpawnCube : MonoBehaviour
         {
             for (int x = 0; Mathf.Abs(x) <= Mathf.Abs(cubes[1].transform.position.x - cubes[0].transform.position.x); x += mx)
             {
-                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x, cubes[0].transform.position.y + 0.5f, cubes[0].transform.position.z));
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x + x - voxel.transform.position.x, cubes[0].transform.position.y + 0.5f - voxel.transform.position.y, cubes[0].transform.position.z - voxel.transform.position.z));
             }
         }
         else if (mz != 0)
         {
             for (int z = 0; Mathf.Abs(z) <= Mathf.Abs(cubes[1].transform.position.z - cubes[0].transform.position.z); z += mz)
             {
-                cubePosition.Add(new Vector3(cubes[0].transform.position.x, cubes[0].transform.position.y + 0.5f, cubes[0].transform.position.z + z));
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x - voxel.transform.position.x, cubes[0].transform.position.y + 0.5f - voxel.transform.position.y, cubes[0].transform.position.z + z - voxel.transform.position.z));
             }
         }
 
