@@ -17,7 +17,6 @@ public class MaterialManager : MonoBehaviour
         sc = GameObject.FindObjectOfType<SpawnCube>();
         selectedObject = sc.selectedObject;
     }
-
     public void SetMaterial()
     {
         if (rayInteractor.TryGetCurrentUIRaycastResult(out RaycastResult raycastResult))
@@ -41,8 +40,10 @@ public class MaterialManager : MonoBehaviour
                     //sphere.transform.position = newPos;
                     sphere.GetComponent<RawImage>().color = selectedColor;
 
-                    if (selectedObject != null)
+                    if (selectedObject.GetComponent<Light>() == null)
                         selectedObject.GetComponent<MeshRenderer>().material.color = selectedColor;
+                    else
+                        selectedObject.GetComponent<Light>().color = selectedColor;
                 
                 }
             }

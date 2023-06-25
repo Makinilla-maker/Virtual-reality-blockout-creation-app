@@ -92,7 +92,7 @@ public class EditorObjExporter : MonoBehaviour
     }
     void ExportMaterialFile(string folder, string filename, Dictionary<string, ObjMaterial> materialList)
     {
-        using (StreamWriter sw = new StreamWriter(folder + "/" + filename + ".mtl"))
+        using (StreamWriter sw = new StreamWriter(folder + "/" + name + ".mtl"))
         {
             foreach (KeyValuePair<string, ObjMaterial> kvp in materialList)
             {

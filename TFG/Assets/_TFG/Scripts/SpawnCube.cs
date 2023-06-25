@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using Unity.VisualScripting;
+using Unity.XR.CoreUtils;
 //using TMPro.EditorUtilities;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -37,8 +38,11 @@ public class SpawnCube : MonoBehaviour
     public GameObject mainHand;
     //Inputs
     public InputActionProperty colorButtonClicked;
-    public InputActionProperty joystickUp;
-    public InputActionProperty trigger;
+    public InputActionProperty joystickUpRight;
+    public InputActionProperty triggerRight;
+    
+    public InputActionProperty joystickUpLeft;
+    public InputActionProperty triggerLeft;
 
     public GameObject cube;
     public GameObject cillinder;
@@ -54,7 +58,7 @@ public class SpawnCube : MonoBehaviour
     public Mode modeState;
 
     public List<GameObject> cubes;
-    public GameObject light;
+    private GameObject lightPoint;
 
     //Provisional
     public GameObject selectedObject;
@@ -62,7 +66,7 @@ public class SpawnCube : MonoBehaviour
     GameObject objectToInstantiate;
     GameObject objectToPlace;
     GameObject voxel;
-    bool scalling;
+    bool gravActive;
 
     GameObject lastCube;
     bool firstCubePlaced;
@@ -73,6 +77,8 @@ public class SpawnCube : MonoBehaviour
     public bool customMeshCheck;
     public bool materialMode;
 
+    GameObject canvasRight;
+    GameObject canvasLeft;
     public MenuManager gridSize;
 
 
@@ -82,10 +88,29 @@ public class SpawnCube : MonoBehaviour
         cubes = new List<GameObject>();
         lineRenderer.enabled = false;
         actionState = State.NONE;
-        scalling = false;
+        gravActive = false;
         firstCubePlaced = false;
         firstCillinder = false;
+        canvasLeft = GameObject.Find("HandMenuLeft");
+        canvasRight = GameObject.Find("HandMenuRight");
+        canvasRight.SetActive(false);
     }
+
+    public void SetMainHand(GameObject hand)
+    {
+        mainHand = hand;
+        if (hand.name == "RightHand Controller")
+        {
+            canvasLeft.SetActive(true);
+            canvasRight.SetActive(false);
+        }
+        else
+        {
+            canvasLeft.SetActive(false);
+            canvasRight.SetActive(true);
+        }
+    }
+
     public void SetMode(string modeName)
     {
         switch(modeName)
@@ -128,13 +153,28 @@ public class SpawnCube : MonoBehaviour
         }
 
     }
-
     // Update is called once per frame
     void Update()
     {
-        float triggerValue = colorButtonClicked.action.ReadValue<float>();
-        var joystickUpValue = joystickUp.action?.ReadValue<Vector2>() ?? Vector2.zero;
-        float export = trigger.action.ReadValue<float>();
+        Vector2 joystickUpValue;
+        float export;
+        float grav = colorButtonClicked.action.ReadValue<float>();
+        Debug.Log(grav);
+        if (mainHand.name == "RightHand Controller")
+        {
+            joystickUpValue = joystickUpRight.action?.ReadValue<Vector2>() ?? Vector2.zero;
+            export = triggerRight.action.ReadValue<float>();
+        }
+        else
+        {
+            joystickUpValue = joystickUpLeft.action?.ReadValue<Vector2>() ?? Vector2.zero;
+            export = triggerLeft.action.ReadValue<float>();
+        }
+        if (grav > .01)
+        {
+            gravActive = !gravActive;
+            GetComponent<ContinuousMoveProviderBase>().enableFly = gravActive;
+        }
         if (modeState == Mode.CUBE || modeState == Mode.MESH || modeState == Mode.CILLINDER)
         {
             if (actionState == State.NONE)
@@ -142,13 +182,14 @@ public class SpawnCube : MonoBehaviour
 
                 if (modeState == Mode.CUBE || modeState == Mode.MESH)
                 {
-                    objectToInstantiate = Instantiate(cube, placeTransform);
-                    objectToInstantiate.gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
+                    
+                    objectToInstantiate = Instantiate(cube, mainHand.GetNamedChild("ObjectPoint").transform);
+                    objectToInstantiate.gameObject.transform.localScale = new Vector3(3f, 3f, 3f);
 
                 }
                 else if (modeState == Mode.CILLINDER)
                 {
-                    objectToInstantiate = Instantiate(cillinder, placeTransform);
+                    objectToInstantiate = Instantiate(cillinder, mainHand.GetNamedChild("ObjectPoint").transform);
                     objectToInstantiate.gameObject.transform.localScale = new Vector3(2f, 2f, 2f);
                     objectToInstantiate.gameObject.transform.rotation = cillinder.transform.rotation;
                 }
@@ -157,7 +198,7 @@ public class SpawnCube : MonoBehaviour
             }
             if ((actionState == State.SELECTED || actionState == State.PLACING))
             {
-                lineRenderer.enabled = true;
+                //lineRenderer.enabled = true;
                 switch (modeState)
                 {
                     case Mode.CUBE:
@@ -194,8 +235,9 @@ public class SpawnCube : MonoBehaviour
             }
             if (actionState == State.RISING)
             {
-                scalling = false;
-                float yScale = GetCubeHeight(transform.position);
+                float yScale = GetCubeHeight(mainHand.transform.position);
+
+                Debug.Log(yScale);
 
                 Vector3 newScale = voxel.transform.localScale;
                 newScale.y = RoundFloat(yScale, 1f);
@@ -221,16 +263,16 @@ public class SpawnCube : MonoBehaviour
         {
             if (export > .1f)
             {
-                light.transform.parent = null;
+                lightPoint.transform.parent = null;
             }
         }
         else if (modeState == Mode.MATERIALS || modeState == Mode.NONE)
         {
             RaycastHit hit;
-            if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+            if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
             {
-                Debug.DrawLine(transform.position, hit.point);
-                if(export > .1f && hit.transform.tag == "ObjectToExport")
+                Debug.DrawLine(mainHand.transform.position, hit.point);
+                if(export > .1f && hit.transform.tag != "Floor")
                 {
                     selectedObject = hit.transform.gameObject;
                     SetOutlineShader(selectedObject);
@@ -240,7 +282,7 @@ public class SpawnCube : MonoBehaviour
         else if(modeState == Mode.DELETE)
         {
             RaycastHit hit;
-            if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+            if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
             {
                 if(hit.transform.tag != "Floor")
                 {
@@ -260,7 +302,6 @@ public class SpawnCube : MonoBehaviour
             //objectToInstantiate.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
         }
     }
-
     void SetOutlineShader(GameObject so)
     {
         foreach(GameObject obj in allObjects)
@@ -271,14 +312,14 @@ public class SpawnCube : MonoBehaviour
     }
     public void SetLight(GameObject l)
     {
-        light = l;
+        lightPoint = l;
     }    
     void SettingCillinder(float export)
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+        if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(transform.position, hit.point);
+            Debug.DrawLine(mainHand.transform.position, hit.point);
             Debug.Log(hit.transform.tag);
 
 
@@ -317,9 +358,9 @@ public class SpawnCube : MonoBehaviour
     void CreatingCilider()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+        if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(transform.position, hit.point);
+            Debug.DrawLine(mainHand.transform.position, hit.point);
             Debug.Log(hit.transform.position);
             Debug.Log(objectToPlace.transform.position);
             Debug.Log((hit.transform.position - objectToPlace.transform.position).magnitude);
@@ -333,9 +374,9 @@ public class SpawnCube : MonoBehaviour
     void CreatingCustomMesh(float export)
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+        if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(transform.position, hit.point);
+            Debug.DrawLine(mainHand.transform.position, hit.point);
             Debug.Log(hit.transform.tag);
 
 
@@ -355,7 +396,7 @@ public class SpawnCube : MonoBehaviour
                 Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
                 objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
                 objectToPlace.gameObject.transform.position = pos;
-                objectToPlace.gameObject.transform.localScale = new Vector3(1, 1, 1);
+                objectToPlace.gameObject.transform.localScale = new Vector3(50, 50, 50);
                 cubes.Add(objectToPlace.gameObject);
 
                 actionState = State.PLACING;
@@ -372,26 +413,46 @@ public class SpawnCube : MonoBehaviour
         float value;
         return value = Mathf.RoundToInt(valueToRound / gridSize.gridSize) * valeRounded;
     }
+    void CreatingVoxel1()
+    {
+        List<Vector3> cubePosition = new List<Vector3>();
+
+        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0), "ObjectToExport");
+
+        foreach (GameObject cube in cubes)
+        {
+            cubePosition.Add(cube.transform.position);
+            Destroy(cube);
+        }
+
+        Debug.Log("Creating Voxel");
+        voxel.GetComponent<VoxelRender>().GenerateVoxelMesh(cubePosition);
+        voxel.GetComponent<MeshRenderer>().material = materialOnceCreated;
+        voxel.AddComponent<MeshCollider>();
+        allObjects.Add(voxel);
+        cubePosition.Clear();
+        cubes.Clear();
+    }
     void CreatingBigCube(float export)
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, Mathf.Infinity))
+        if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(transform.position, hit.point);
+            Debug.DrawLine(mainHand.transform.position, hit.point);
             Debug.Log(hit.transform.tag);
 
 
             Vector3 pos;
             pos = hit.point;
             pos.x = RoundFloat(pos.x, gridSize.gridSize);
-            pos.y = RoundFloat(pos.y,1f);
+            pos.y = RoundFloat(pos.y, 1f);
             pos.z = RoundFloat(pos.z, gridSize.gridSize);
             //transform.position = pos;
 
 
             if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
             {
-                if(!firstCubePlaced)
+                if (!firstCubePlaced)
                 {
                     firstCubePlaced = true;
                     Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -415,25 +476,6 @@ public class SpawnCube : MonoBehaviour
         {
             Debug.Log("No collision detected.");
         }
-    }
-    void CreatingVoxel1()
-    {
-        List<Vector3> cubePosition = new List<Vector3>();
-
-        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0), "ObjectToExport");
-
-        foreach (GameObject cube in cubes)
-        {
-            cubePosition.Add(cube.transform.position);
-            Destroy(cube);
-        }
-
-        Debug.Log("Creating Voxel");
-        voxel.GetComponent<VoxelRender>().GenerateVoxelMesh(cubePosition);
-        voxel.GetComponent<MeshRenderer>().material = materialOnceCreated;
-        allObjects.Add(voxel);
-        cubePosition.Clear();
-        cubes.Clear();
     }
     void CreatingVoxel2()
     {
@@ -462,8 +504,14 @@ public class SpawnCube : MonoBehaviour
         else if (cubes[1].transform.position.z < cubes[0].transform.position.z)
             mz = -1;
 
-        cubePosition = CreateMeshVoxel(mx,mz);
-        
+        cubePosition = CreateMeshVoxel(mx, mz);
+
+        if (cubePosition.Count == 0)
+        {
+            // Ambos cubos están en la misma posición, agregar una única posición
+            cubePosition.Add(new Vector3(cubes[0].transform.position.x - voxel.transform.position.x, cubes[0].transform.position.y + 0.5f - voxel.transform.position.y, cubes[0].transform.position.z - voxel.transform.position.z));
+        }
+
         Debug.Log("Creating Voxel");
         voxel.GetComponent<VoxelRender>().GenerateVoxelMesh(cubePosition);
         voxel.GetComponent<MeshRenderer>().material = materialOnceCreated;
@@ -479,6 +527,7 @@ public class SpawnCube : MonoBehaviour
         cubePosition.Clear();
         cubes.Clear();
     }
+
     List<Vector3> CreateMeshVoxel(int mx, int mz)
     {
         List<Vector3> cubePosition = new List<Vector3>();
@@ -513,9 +562,13 @@ public class SpawnCube : MonoBehaviour
     float GetCubeHeight(Vector3 controllerPosition)
     {
         float desiredHeight = controllerPosition.y; // Obtener la altura deseada del controlador de realidad virtual
-        float groundHeight = 0.0f; // Altura del suelo predefinida si no hay colisión
+        float groundHeight = voxel.transform.position.y;// Altura del suelo predefinida si no hay colisión
+        float finalHeigh = desiredHeight - groundHeight;// Sumar la altura deseada a la altura del suelo
 
-        return groundHeight + desiredHeight; // Sumar la altura deseada a la altura del suelo
+        if (finalHeigh < 1)
+            return 1; 
+        else
+            return finalHeigh;
     }
     GameObject CreateObject(GameObject go, Vector3 pos, string tag)
     {

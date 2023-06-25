@@ -350,6 +350,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Trigger",
+                    "type": "Value",
+                    "id": "d65335c8-adac-4d40-9b35-d9d88165e04e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Joystick ",
+                    "type": "Value",
+                    "id": "3bce3c37-0986-4467-afd6-99114b90444e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -559,6 +577,28 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Aim Flags",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6c397635-92a7-467b-a706-aadcb6e9312d",
+                    "path": "<XRController>{LeftHand}/triggerPressed",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Trigger",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9434d1d8-4783-411b-a9fe-4fdda65aa616",
+                    "path": "<XRController>{LeftHand}/joystickClicked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Joystick ",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
