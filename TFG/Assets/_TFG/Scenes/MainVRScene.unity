@@ -13989,7 +13989,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1621801422}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e988983f96fe1dd48800bcdfc82f23e9, type: 3}
   m_Name: 
@@ -14134,7 +14134,7 @@ LineRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1621801422}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -14584,10 +14584,10 @@ MonoBehaviour:
   colorButtonClicked:
     m_UseReference: 0
     m_Action:
-      m_Name: 
+      m_Name: Color Button Clicked
       m_Type: 0
       m_ExpectedControlType: 
-      m_Id: 
+      m_Id: cac8f096-c783-4d9f-90b7-f917c16cde5b
       m_Processors: 
       m_Interactions: 
       m_SingletonActionBindings: []
