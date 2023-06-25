@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
+using TMPro;
 using Unity.VisualScripting;
 using Unity.XR.CoreUtils;
 //using TMPro.EditorUtilities;
@@ -12,6 +13,7 @@ using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.XR.Haptics;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public enum State
 {
@@ -36,6 +38,7 @@ public enum Mode
 public class SpawnCube : MonoBehaviour
 {
     public GameObject mainHand;
+    private XRInteractorLineVisual lineRenderer;
     //Inputs
     public InputActionProperty colorButtonClicked;
     public InputActionProperty joystickUpRight;
@@ -52,7 +55,6 @@ public class SpawnCube : MonoBehaviour
 
     public float objectOffset;
 
-    public LineRenderer lineRenderer;
 
     public State actionState;
     public Mode modeState;
@@ -63,10 +65,13 @@ public class SpawnCube : MonoBehaviour
     //Provisional
     public GameObject selectedObject;
     public List<GameObject> allObjects;
+    List<GameObject> destrollObjects;
     GameObject objectToInstantiate;
     GameObject objectToPlace;
     GameObject voxel;
     bool gravActive;
+    CanvasGroup gravCanvas;
+    bool pressAgain;
 
     GameObject lastCube;
     bool firstCubePlaced;
@@ -86,6 +91,7 @@ public class SpawnCube : MonoBehaviour
     void Start()
     {
         cubes = new List<GameObject>();
+        lineRenderer = mainHand.GetComponent<XRInteractorLineVisual>();
         lineRenderer.enabled = false;
         actionState = State.NONE;
         gravActive = false;
@@ -94,8 +100,9 @@ public class SpawnCube : MonoBehaviour
         canvasLeft = GameObject.Find("HandMenuLeft");
         canvasRight = GameObject.Find("HandMenuRight");
         canvasRight.SetActive(false);
+        gravCanvas = GameObject.Find("CanvasAraSi").GetComponent<CanvasGroup>();
+        pressAgain = true;
     }
-
     public void SetMainHand(GameObject hand)
     {
         mainHand = hand;
@@ -109,8 +116,8 @@ public class SpawnCube : MonoBehaviour
             canvasLeft.SetActive(false);
             canvasRight.SetActive(true);
         }
+        lineRenderer = mainHand.GetComponent<XRInteractorLineVisual>();
     }
-
     public void SetMode(string modeName)
     {
         switch(modeName)
@@ -119,36 +126,43 @@ public class SpawnCube : MonoBehaviour
                 modeState = Mode.NONE;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = false;
                 break;
             case "CUBE":
                 modeState = Mode.CUBE;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = true;
                 break;
             case "CILLINDER":
                 modeState = Mode.CILLINDER;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = true;
                 break;
             case "MESH":
                 modeState = Mode.MESH;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = true;
                 break;
             case "MATERIALS":
                 modeState = Mode.MATERIALS;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = true;
                 break;
             case "LIGHT":
                 modeState = Mode.LIGHT;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = false;
                 break;
             case "DELETE":
                 modeState = Mode.DELETE;
                 actionState = State.NONE;
                 Destroy(objectToInstantiate);
+                lineRenderer.enabled = true;
                 break;
         }
 
@@ -159,7 +173,6 @@ public class SpawnCube : MonoBehaviour
         Vector2 joystickUpValue;
         float export;
         float grav = colorButtonClicked.action.ReadValue<float>();
-        Debug.Log(grav);
         if (mainHand.name == "RightHand Controller")
         {
             joystickUpValue = joystickUpRight.action?.ReadValue<Vector2>() ?? Vector2.zero;
@@ -170,16 +183,28 @@ public class SpawnCube : MonoBehaviour
             joystickUpValue = joystickUpLeft.action?.ReadValue<Vector2>() ?? Vector2.zero;
             export = triggerLeft.action.ReadValue<float>();
         }
-        if (grav > .01)
+        if (grav > .01f && pressAgain)
         {
+            pressAgain = false;
+            gravCanvas.alpha = 1;
+
+            if (gravActive)
+                gravCanvas.gameObject.GetNamedChild("GravText").GetComponent<TMP_Text>().text = "Gravity On";
+            else
+                gravCanvas.gameObject.GetNamedChild("GravText").GetComponent<TMP_Text>().text = "Gravity Off";
+            
             gravActive = !gravActive;
             GetComponent<ContinuousMoveProviderBase>().enableFly = gravActive;
+        }
+        if (grav < 0.5f && !pressAgain)
+        {
+            gravCanvas.alpha = 0;
+            pressAgain = true;
         }
         if (modeState == Mode.CUBE || modeState == Mode.MESH || modeState == Mode.CILLINDER)
         {
             if (actionState == State.NONE)
             {
-
                 if (modeState == Mode.CUBE || modeState == Mode.MESH)
                 {
                     
@@ -237,8 +262,6 @@ public class SpawnCube : MonoBehaviour
             {
                 float yScale = GetCubeHeight(mainHand.transform.position);
 
-                Debug.Log(yScale);
-
                 Vector3 newScale = voxel.transform.localScale;
                 newScale.y = RoundFloat(yScale, 1f);
                 voxel.transform.localScale = newScale;
@@ -287,7 +310,7 @@ public class SpawnCube : MonoBehaviour
                 if(hit.transform.tag != "Floor")
                 {
                     SetOutlineShader(hit.transform.gameObject);
-                    if(export > .1)
+                    if (export > .1)
                     {
                         Debug.Log("_____________________________________________________________________");
                         allObjects.Remove(hit.transform.gameObject);
@@ -383,7 +406,7 @@ public class SpawnCube : MonoBehaviour
             Vector3 pos;
             pos = hit.point;
             pos.x = RoundFloat(pos.x, gridSize.gridSize);
-            pos.y = RoundFloat(pos.y, 0.5f);
+            pos.y = RoundFloat(pos.y, 1f);
             pos.z = RoundFloat(pos.z, gridSize.gridSize);
             //pos.x = Mathf.RoundToInt(pos.x / 1f) * 1f;
             //pos.y = (Mathf.RoundToInt(pos.y / 1f) * 1f) + 0.5f;
@@ -417,11 +440,13 @@ public class SpawnCube : MonoBehaviour
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
-        voxel = CreateObject(voxelPrfab, new Vector3(0, 0, 0), "ObjectToExport");
+        voxel = CreateObject(voxelPrfab, cubes[0].transform.position, "ObjectToExport");
 
         foreach (GameObject cube in cubes)
         {
-            cubePosition.Add(cube.transform.position);
+            Vector3 posi = cube.transform.position - cubes[0].transform.position;
+            posi.y += 0.5f;
+            cubePosition.Add(posi);
             Destroy(cube);
         }
 
@@ -441,14 +466,16 @@ public class SpawnCube : MonoBehaviour
             Debug.DrawLine(mainHand.transform.position, hit.point);
             Debug.Log(hit.transform.tag);
 
+            Debug.Log(hit.normal);
 
             Vector3 pos;
+
             pos = hit.point;
             pos.x = RoundFloat(pos.x, gridSize.gridSize);
             pos.y = RoundFloat(pos.y, 1f);
             pos.z = RoundFloat(pos.z, gridSize.gridSize);
-            //transform.position = pos;
 
+            if(hit.normal.x < 0 || hit.normal.y < 0 || hit.normal.z < 0)    pos += hit.normal;
 
             if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
             {
@@ -490,7 +517,6 @@ public class SpawnCube : MonoBehaviour
 
         voxel = CreateObject(voxelPrfab, cubes[0].transform.position, "ObjectToExport");
 
-        Debug.Log(cubes[1].transform.position);
         int mx = 0;
         int mz = 0;
 
@@ -527,7 +553,6 @@ public class SpawnCube : MonoBehaviour
         cubePosition.Clear();
         cubes.Clear();
     }
-
     List<Vector3> CreateMeshVoxel(int mx, int mz)
     {
         List<Vector3> cubePosition = new List<Vector3>();

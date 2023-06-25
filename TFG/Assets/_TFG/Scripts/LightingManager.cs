@@ -28,7 +28,7 @@ public class LightingManager : MonoBehaviour
     }
     public void SpawnLight(GameObject light)
     {
-        GameObject hand = FindObjectOfType<SpawnCube>().gameObject;
+        GameObject hand = FindObjectOfType<SpawnCube>().mainHand;
 
         instanciatedLight = Instantiate(light, hand.transform);
 
