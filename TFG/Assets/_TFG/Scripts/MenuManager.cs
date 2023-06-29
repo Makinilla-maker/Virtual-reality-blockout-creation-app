@@ -14,12 +14,11 @@ public class MenuManager : MonoBehaviour
     public CanvasGroup cg;
     float oldAlpha;
 
-    public TMP_Text gridText;
+    //public TMP_Text gridText;
     public int gridSize;
 
     public void Start()
     {
-        gridText.text = gridSize.ToString();
         SetScrrensToFalse();
     }
     void SetScrrensToFalse()
@@ -35,7 +34,8 @@ public class MenuManager : MonoBehaviour
     }
     public void Update()
     {
-        //if(cg.alpha != oldAlpha)
+        //Debug.Log(cg.alpha);
+        //if (cg.alpha != oldAlpha)
         //{
         //    cg.alpha = oldAlpha;
         //    SetAlpha(cg.alpha);
@@ -54,10 +54,5 @@ public class MenuManager : MonoBehaviour
     {
         SetScrrensToFalse();
         screen.SetActive(true);
-    }
-    public void SetGridSize(int number)
-    {
-        gridSize += number;
-        gridText.text = gridSize.ToString();
     }
 }

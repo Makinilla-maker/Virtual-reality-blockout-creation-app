@@ -8,6 +8,7 @@ using System;
 using Unity.Collections;
 using AsciiFBXExporter;
 using UnityEditor.Rendering.Universal;
+using System.Linq;
 
 public class EditorObjExporter : MonoBehaviour
 {
@@ -23,17 +24,29 @@ public class EditorObjExporter : MonoBehaviour
     private string targetFolder;
     public string name = "ExporterObject";
 
+    public bool FBX;
+
     private void Start()
     {
-        targetFolder = Application.dataPath;
+        //targetFolder = Application.dataPath;
+        targetFolder = $"{Application.dataPath}/Exports";
         Debug.Log(targetFolder);
     }
     // Update is called once per frame
     public void ExportGameObjects()
     {
-        if (!CreateFolder())
-            return;
-        StartExport(name);       
+        if(FBX)
+        {
+            targetFolder = $"{Application.dataPath}/Exports" + "/" + name + ".fbx";
+            List<GameObject> allGo = GameObject.FindGameObjectsWithTag("ObjectToExport").ToList();
+            FBXExporter.ExportGameObjToFBX(allGo,targetFolder);
+        }
+        else
+        {
+            if (!CreateFolder())
+                return;
+            StartExport(name);
+        }             
     }
     bool CreateFolder()
     {

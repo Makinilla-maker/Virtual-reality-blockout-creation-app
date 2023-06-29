@@ -13,7 +13,7 @@ using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.XR.Haptics;
 using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit;
-using static UnityEditor.Experimental.GraphView.GraphView;
+//using static UnityEditor.Experimental.GraphView.GraphView;
 
 public enum State
 {
@@ -28,8 +28,9 @@ public enum Mode
 {
     NONE,
     CUBE,
-    CILLINDER,
     MESH,
+    CILLINDER,
+    RAMP,
     MATERIALS,
     LIGHT,
     DELETE,
@@ -49,6 +50,7 @@ public class SpawnCube : MonoBehaviour
 
     public GameObject cube;
     public GameObject cillinder;
+    public GameObject ramp;
     public GameObject voxelPrfab;
     public Transform placeTransform;
     public Material materialOnceCreated;
@@ -75,7 +77,9 @@ public class SpawnCube : MonoBehaviour
 
     GameObject lastCube;
     bool firstCubePlaced;
+    bool secondCubePlaced;
     bool firstCillinder;
+    bool deleting;
 
     //Configuration
     public bool cubeCheck;
@@ -86,8 +90,10 @@ public class SpawnCube : MonoBehaviour
     GameObject canvasLeft;
     public MenuManager gridSize;
 
+    GameObject a;
 
     // Start is called before the first frame update
+
     void Start()
     {
         cubes = new List<GameObject>();
@@ -96,12 +102,17 @@ public class SpawnCube : MonoBehaviour
         actionState = State.NONE;
         gravActive = false;
         firstCubePlaced = false;
+        secondCubePlaced = false;
         firstCillinder = false;
         canvasLeft = GameObject.Find("HandMenuLeft");
         canvasRight = GameObject.Find("HandMenuRight");
         canvasRight.SetActive(false);
         gravCanvas = GameObject.Find("CanvasAraSi").GetComponent<CanvasGroup>();
         pressAgain = true;
+        deleting = false;
+
+        SetPlayerSpeed(2);
+        SwitchMovement("LINEAL");
     }
     public void SetMainHand(GameObject hand)
     {
@@ -124,64 +135,65 @@ public class SpawnCube : MonoBehaviour
         {
             case "NONE":
                 modeState = Mode.NONE;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
+                Destroy(objectToPlace);
                 lineRenderer.enabled = false;
                 break;
             case "CUBE":
                 modeState = Mode.CUBE;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
                 lineRenderer.enabled = true;
                 break;
             case "CILLINDER":
                 modeState = Mode.CILLINDER;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
                 lineRenderer.enabled = true;
                 break;
             case "MESH":
                 modeState = Mode.MESH;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
                 lineRenderer.enabled = true;
                 break;
             case "MATERIALS":
                 modeState = Mode.MATERIALS;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
+                Destroy(objectToPlace);
                 lineRenderer.enabled = true;
                 break;
             case "LIGHT":
                 modeState = Mode.LIGHT;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
+                Destroy(objectToPlace);
                 lineRenderer.enabled = false;
                 break;
             case "DELETE":
                 modeState = Mode.DELETE;
-                actionState = State.NONE;
-                Destroy(objectToInstantiate);
+                Destroy(objectToPlace);
+                lineRenderer.enabled = true;
+                break;
+            case "RAMP":
+                modeState = Mode.RAMP;
+                Destroy(objectToPlace);
                 lineRenderer.enabled = true;
                 break;
         }
 
+        actionState = State.NONE;
+        Destroy(objectToInstantiate);
+        DestroyListGO(cubes);
+
+        firstCubePlaced = false;
+        secondCubePlaced = false;
     }
     // Update is called once per frame
     void Update()
     {
         Vector2 joystickUpValue;
-        float export;
+        float trigger;
         float grav = colorButtonClicked.action.ReadValue<float>();
         if (mainHand.name == "RightHand Controller")
         {
             joystickUpValue = joystickUpRight.action?.ReadValue<Vector2>() ?? Vector2.zero;
-            export = triggerRight.action.ReadValue<float>();
+            trigger = triggerRight.action.ReadValue<float>();
         }
         else
         {
             joystickUpValue = joystickUpLeft.action?.ReadValue<Vector2>() ?? Vector2.zero;
-            export = triggerLeft.action.ReadValue<float>();
+            trigger = triggerLeft.action.ReadValue<float>();
         }
         if (grav > .01f && pressAgain)
         {
@@ -201,13 +213,12 @@ public class SpawnCube : MonoBehaviour
             gravCanvas.alpha = 0;
             pressAgain = true;
         }
-        if (modeState == Mode.CUBE || modeState == Mode.MESH || modeState == Mode.CILLINDER)
+        if (modeState == Mode.CUBE || modeState == Mode.MESH || modeState == Mode.CILLINDER|| modeState == Mode.RAMP)
         {
             if (actionState == State.NONE)
             {
                 if (modeState == Mode.CUBE || modeState == Mode.MESH)
                 {
-                    
                     objectToInstantiate = Instantiate(cube, mainHand.GetNamedChild("ObjectPoint").transform);
                     objectToInstantiate.gameObject.transform.localScale = new Vector3(3f, 3f, 3f);
 
@@ -215,6 +226,12 @@ public class SpawnCube : MonoBehaviour
                 else if (modeState == Mode.CILLINDER)
                 {
                     objectToInstantiate = Instantiate(cillinder, mainHand.GetNamedChild("ObjectPoint").transform);
+                    objectToInstantiate.gameObject.transform.localScale = new Vector3(2f, 2f, 2f);
+                    objectToInstantiate.gameObject.transform.rotation = cillinder.transform.rotation;
+                }
+                else if(modeState == Mode.RAMP)
+                {
+                    objectToInstantiate = Instantiate(ramp, mainHand.GetNamedChild("ObjectPoint").transform);
                     objectToInstantiate.gameObject.transform.localScale = new Vector3(2f, 2f, 2f);
                     objectToInstantiate.gameObject.transform.rotation = cillinder.transform.rotation;
                 }
@@ -227,29 +244,32 @@ public class SpawnCube : MonoBehaviour
                 switch (modeState)
                 {
                     case Mode.CUBE:
-                        CreatingBigCube(export);
+                        CreatingBigCube(trigger);
                         break;
                     case Mode.MESH:
-                        CreatingCustomMesh(export);
+                        CreatingCustomMesh(trigger);
                         break;
                     case Mode.CILLINDER:
-                        Debug.Log(export);
-                        SettingCillinder(export);
+                        SettingCillinder(trigger);
+                        break;
+                    case Mode.RAMP:
+                        Debug.Log(trigger);
+                        SettingRamp(trigger);
                         break;
                 }
             }
-            if (actionState == State.PLACING && export < .1f)
+            if (actionState == State.PLACING && trigger < .1f)
             {
                 //actionState = State.CREATING;
 
                 switch (modeState)
                 {
                     case Mode.CUBE:
-                        CreatingVoxel2();
+                        CreatingVoxelBigCube();
                         actionState = State.RISING;
                         break;
                     case Mode.MESH:
-                        CreatingVoxel1();
+                        CreatingVoxelCustomMesh();
                         actionState = State.RISING;
                         break;
                     case Mode.CILLINDER:
@@ -268,23 +288,24 @@ public class SpawnCube : MonoBehaviour
                 //StartCoroutine(ScaleUp());
 
             }
-            if (actionState == State.RISING && export > .1f)
+            if (actionState == State.RISING && trigger > .1f)
             {
                 actionState = State.OBJECT_CREATED;
             }
-            if (actionState == State.OBJECT_CREATED && export < .1f)
+            if (actionState == State.OBJECT_CREATED && trigger < .1f)
             {
                 actionState = State.SELECTED;
             }
-
-            if (joystickUpValue.y > .1f)
-            {
-                Debug.Log(joystickUpValue.y);
-            }
         }
+        if (joystickUpValue.y > .1f)
+        {
+            Debug.Log(joystickUpValue);
+            GetComponent<CharacterController>().Move(joystickUpValue/3);
+        }
+
         else if (modeState == Mode.LIGHT)
         {
-            if (export > .1f)
+            if (trigger > .1f)
             {
                 lightPoint.transform.parent = null;
             }
@@ -295,7 +316,7 @@ public class SpawnCube : MonoBehaviour
             if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
             {
                 Debug.DrawLine(mainHand.transform.position, hit.point);
-                if(export > .1f && hit.transform.tag != "Floor")
+                if(trigger > .1f && hit.transform.tag != "Floor")
                 {
                     selectedObject = hit.transform.gameObject;
                     SetOutlineShader(selectedObject);
@@ -305,19 +326,21 @@ public class SpawnCube : MonoBehaviour
         else if(modeState == Mode.DELETE)
         {
             RaycastHit hit;
-            if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
+            if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity) && !deleting)
             {
                 if(hit.transform.tag != "Floor")
                 {
                     SetOutlineShader(hit.transform.gameObject);
-                    if (export > .1)
+                    if (trigger > .1)
                     {
+                        deleting = true;
                         Debug.Log("_____________________________________________________________________");
                         allObjects.Remove(hit.transform.gameObject);
                         Destroy(hit.transform.gameObject);
                     }
                 }
             }
+            if(trigger < .1 && deleting) deleting = false;
         }
         if (objectToInstantiate != null)
         {
@@ -337,6 +360,110 @@ public class SpawnCube : MonoBehaviour
     {
         lightPoint = l;
     }    
+    void SettingRamp(float export)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
+        {
+            Debug.DrawLine(mainHand.transform.position, hit.point);
+
+            Vector3 pos;
+            pos = hit.point;
+
+            //if(hit.normal.x < 0)    pos += hit.normal;
+            //if(hit.normal.z < 0)    pos += hit.normal;
+
+            pos.x = RoundFloat(pos.x, gridSize.gridSize);
+            pos.y = RoundFloat(pos.y, 1f);
+            pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
+
+            Debug.Log(pos);
+            Debug.Log(hit.normal);
+            if (!hit.transform.CompareTag("ObjectPlacing"))
+            {
+                if (!firstCubePlaced)
+                {
+                    firstCubePlaced = true;
+                    objectToPlace = CreateObject(ramp, pos, "ObjectPlacing");
+
+                }
+                else if (!secondCubePlaced)
+                {
+                    objectToPlace.gameObject.transform.position = pos;
+                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                }
+            }
+            if (export > .0f && !secondCubePlaced)
+            {
+                actionState = State.PLACING;
+                secondCubePlaced = true;
+            }
+            else if(secondCubePlaced)
+            {
+                RotingRamp(export);
+            }
+
+        }
+        else
+        {
+            Debug.Log("No collision detected.");
+        }
+    }
+    void RotingRamp(float export)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
+        {
+             Transform objectTransform = objectToPlace.transform;
+
+            if(hit.transform.gameObject.tag != "ObjectPlacing")
+            {
+                Debug.Log(hit.point);
+                Vector3 pos;
+                pos = hit.point;
+                pos.x = RoundFloat(pos.x, gridSize.gridSize);
+                pos.y = RoundFloat(pos.y, 1f);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize);
+
+                Vector3 vectorDist = pos - objectToPlace.transform.position;
+                float distanceZ = Mathf.Abs(vectorDist.z);
+                float distanceY = Mathf.Abs(vectorDist.y);
+                float distanceX = Mathf.Abs(vectorDist.x);
+
+
+                // Obtener la rotación hacia el objetivo
+                Quaternion targetRotation = Quaternion.LookRotation(pos - objectTransform.position);
+
+                // Crear una rotación final con los valores deseados en los ejes X y Z
+                Quaternion finalRotation = Quaternion.Euler(objectTransform.rotation.eulerAngles.x, targetRotation.eulerAngles.y, objectTransform.rotation.eulerAngles.z);
+
+                // Asignar la rotación final al objeto
+                objectTransform.rotation = finalRotation;
+                Vector3 newScale;
+
+                distanceX *= 50;
+                distanceY *= 50;
+                distanceZ *= 50;
+
+                if (distanceX * 50 < 50) distanceX = 50;
+                if (distanceY * 50 < 50) distanceY = 50;
+                if (distanceZ * 50 < 50) distanceZ = 50;
+
+                newScale = new Vector3(objectTransform.localScale.x, distanceZ, distanceY);
+                Debug.Log(newScale);
+                objectTransform.localScale = newScale;
+            }
+            if (export < .1f)
+            {
+                actionState = State.SELECTED;
+                objectTransform.GetComponent<Renderer>().material = materialOnceCreated;
+                firstCubePlaced = false;
+                secondCubePlaced = false;
+            }
+            
+        }
+
+    }
     void SettingCillinder(float export)
     {
         RaycastHit hit;
@@ -408,21 +535,28 @@ public class SpawnCube : MonoBehaviour
             pos.x = RoundFloat(pos.x, gridSize.gridSize);
             pos.y = RoundFloat(pos.y, 1f);
             pos.z = RoundFloat(pos.z, gridSize.gridSize);
-            //pos.x = Mathf.RoundToInt(pos.x / 1f) * 1f;
-            //pos.y = (Mathf.RoundToInt(pos.y / 1f) * 1f) + 0.5f;
-            //pos.z = Mathf.RoundToInt(pos.z / 1f) * 1f;
-            //transform.position = pos;
 
-
-            if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
+            if (!hit.transform.CompareTag("ObjectPlacing"))
             {
-                Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-                objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
-                objectToPlace.gameObject.transform.position = pos;
-                objectToPlace.gameObject.transform.localScale = new Vector3(50, 50, 50);
-                cubes.Add(objectToPlace.gameObject);
+                if (!firstCubePlaced)
+                {
+                    firstCubePlaced = true;
+                    secondCubePlaced = false;
+                    objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
+                    cubes.Add(objectToPlace.gameObject);
+                }
+                else
+                {
+                    if (export > .0f && !secondCubePlaced)
+                    {
+                        firstCubePlaced = false;
+                        secondCubePlaced = true;
 
-                actionState = State.PLACING;
+                        actionState = State.PLACING;
+                    }
+                    objectToPlace.gameObject.transform.position = pos;
+                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                }
             }
 
         }
@@ -436,7 +570,7 @@ public class SpawnCube : MonoBehaviour
         float value;
         return value = Mathf.RoundToInt(valueToRound / gridSize.gridSize) * valeRounded;
     }
-    void CreatingVoxel1()
+    void CreatingVoxelCustomMesh()
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
@@ -455,48 +589,53 @@ public class SpawnCube : MonoBehaviour
         voxel.GetComponent<MeshRenderer>().material = materialOnceCreated;
         voxel.AddComponent<MeshCollider>();
         allObjects.Add(voxel);
+        firstCubePlaced = false;
+        secondCubePlaced = false;
         cubePosition.Clear();
         cubes.Clear();
     }
-    void CreatingBigCube(float export)
+    void CreatingBigCube(float trigger)
     {
         RaycastHit hit;
         if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
             Debug.DrawLine(mainHand.transform.position, hit.point);
-            Debug.Log(hit.transform.tag);
-
-            Debug.Log(hit.normal);
 
             Vector3 pos;
-
             pos = hit.point;
+
+            //if(hit.normal.x < 0)    pos += hit.normal;
+            //if(hit.normal.z < 0)    pos += hit.normal;
+
             pos.x = RoundFloat(pos.x, gridSize.gridSize);
             pos.y = RoundFloat(pos.y, 1f);
             pos.z = RoundFloat(pos.z, gridSize.gridSize);
-
-            if(hit.normal.x < 0 || hit.normal.y < 0 || hit.normal.z < 0)    pos += hit.normal;
-
-            if (!hit.transform.CompareTag("ObjectPlacing") && export > .0f)
+            Debug.Log(pos);
+            Debug.Log(hit.normal);
+            if(!hit.transform.CompareTag("ObjectPlacing"))
             {
                 if (!firstCubePlaced)
                 {
                     firstCubePlaced = true;
-                    Debug.Log("Intanciating cuboooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
                     objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
-                    objectToPlace.gameObject.transform.position = pos;
-                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
                     cubes.Add(objectToPlace.gameObject);
-                    lastCube = CreateObject(cube, pos, "ObjectPlacing");
-                    cubes.Add(lastCube.gameObject);
+
                 }
                 else
                 {
-                    lastCube.gameObject.transform.position = pos;
+                    if (trigger > .0f && !secondCubePlaced)
+                    {
+                        secondCubePlaced = true;
+                        objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
+                        cubes.Add(objectToPlace.gameObject);
+                    }
+                    objectToPlace.gameObject.transform.position = pos;
                     objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                    
                 }
-                actionState = State.PLACING;
             }
+            
+            if(trigger > .0f && firstCubePlaced)    actionState = State.PLACING;
 
         }
         else
@@ -504,37 +643,62 @@ public class SpawnCube : MonoBehaviour
             Debug.Log("No collision detected.");
         }
     }
-    void CreatingVoxel2()
+    public void SetPlayerSpeed(int number)
+    {
+        if (mainHand.name == "LeftHand Controller")
+            a = GameObject.Find("VelocityPlayerNumberRight");
+        else
+            a = GameObject.Find("VelocityPlayerNumberLeft");
+
+        //otherHand.transform.Find("VelocityPlayerNumber").gameObject;
+        //a.GetComponent<TMP_Text>().text = number.ToString();
+
+        float speed = GetComponent<ContinuousMoveProviderBase>().moveSpeed + number;
+        GetComponent<ContinuousMoveProviderBase>().moveSpeed = speed;
+    }    
+    public void Exit()
+    {
+        Application.Quit();
+    }
+    void CreatingVoxelBigCube()
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
-        if (cubes[1].transform.position.y < cubes[0].transform.position.y)
+        if(cubes.Count > 1)
         {
-            GameObject go = cubes[0];
-            cubes[0] = cubes[1];
-            cubes[1] = go;
+            if (cubes[1].transform.position.y < cubes[0].transform.position.y)
+            {
+                GameObject go = cubes[0];
+                cubes[0] = cubes[1];
+                cubes[1] = go;
+            }
+
+            voxel = CreateObject(voxelPrfab, cubes[0].transform.position, "ObjectToExport");
+
+            int mx = 0;
+            int mz = 0;
+
+            if (cubes[1].transform.position.x > cubes[0].transform.position.x)
+                mx = 1;
+            else if (cubes[1].transform.position.x < cubes[0].transform.position.x)
+                mx = -1;
+
+            if (cubes[1].transform.position.z > cubes[0].transform.position.z)
+                mz = 1;
+            else if (cubes[1].transform.position.z < cubes[0].transform.position.z)
+                mz = -1;
+
+            cubePosition = CreateMeshVoxel(mx, mz);
+
+            if (cubePosition.Count == 0)
+            {
+                // Ambos cubos están en la misma posición, agregar una única posición
+                cubePosition.Add(new Vector3(cubes[0].transform.position.x - voxel.transform.position.x, cubes[0].transform.position.y + 0.5f - voxel.transform.position.y, cubes[0].transform.position.z - voxel.transform.position.z));
+            }
         }
-
-        voxel = CreateObject(voxelPrfab, cubes[0].transform.position, "ObjectToExport");
-
-        int mx = 0;
-        int mz = 0;
-
-        if (cubes[1].transform.position.x > cubes[0].transform.position.x)
-            mx = 1;
-        else if (cubes[1].transform.position.x < cubes[0].transform.position.x)
-            mx = -1;
-
-        if (cubes[1].transform.position.z > cubes[0].transform.position.z)
-            mz = 1;
-        else if (cubes[1].transform.position.z < cubes[0].transform.position.z)
-            mz = -1;
-
-        cubePosition = CreateMeshVoxel(mx, mz);
-
-        if (cubePosition.Count == 0)
+        else
         {
-            // Ambos cubos están en la misma posición, agregar una única posición
+            voxel = CreateObject(voxelPrfab, cubes[0].transform.position, "ObjectToExport");
             cubePosition.Add(new Vector3(cubes[0].transform.position.x - voxel.transform.position.x, cubes[0].transform.position.y + 0.5f - voxel.transform.position.y, cubes[0].transform.position.z - voxel.transform.position.z));
         }
 
@@ -544,16 +708,22 @@ public class SpawnCube : MonoBehaviour
         voxel.AddComponent<BoxCollider>();
         allObjects.Add(voxel);
 
-        foreach (GameObject cube in cubes)
+        DestroyListGO(cubes);
+
+        firstCubePlaced = false;
+        secondCubePlaced = false;
+        cubePosition.Clear();
+    }
+    void DestroyListGO(List<GameObject> list)
+    {
+        foreach (GameObject cube in list)
         {
             Destroy(cube);
         }
-
-        firstCubePlaced = false;
-        cubePosition.Clear();
         cubes.Clear();
     }
-    List<Vector3> CreateMeshVoxel(int mx, int mz)
+    
+List<Vector3> CreateMeshVoxel(int mx, int mz)
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
@@ -600,5 +770,23 @@ public class SpawnCube : MonoBehaviour
         GameObject inst = Instantiate(go, pos, go.transform.rotation);
         inst.transform.tag = tag;
         return inst;
+    }
+    public void SwitchMovement(string type)
+    {
+        switch(type)
+        {
+            case "TP":
+                GetComponent<TeleportationProvider>().enabled = true;
+                GetComponent<ContinuousMoveProviderBase>().enabled = false;
+                break;
+            case "LINEAL":
+                GetComponent<ContinuousMoveProviderBase>().enabled = true;
+                GetComponent<TeleportationProvider>().enabled = false;
+                break;
+            default:
+                Debug.Log("Non movement selected");
+                break;
+
+        }
     }
 }

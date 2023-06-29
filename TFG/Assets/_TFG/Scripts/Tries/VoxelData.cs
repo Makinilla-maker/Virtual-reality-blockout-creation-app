@@ -12,16 +12,6 @@ public class VoxelData
 
     public int GetNeighbor(Vector3 pos, Direction dir)
     {
-        //DataCoordinate offsetToCheck = offsets[(int)dir];
-        //DataCoordinate neighborCoord = new DataCoordinate((int)pos.x + offsetToCheck.x, 0 + offsetToCheck.y, (int)pos.z + offsetToCheck.z);
-
-        //if (neighborCoord.x < 0 || neighborCoord.x >= Width || neighborCoord.y != 0 || neighborCoord.z < 0 || neighborCoord.z >= Depth)
-        //{
-        //    return 0;
-        //}
-        //else
-        //    return 1;
-        
         DataCoordinate offsetToCheck = offsets[(int)dir];
 
         Vector3 reference =  pos + offsetToCheck.position;
