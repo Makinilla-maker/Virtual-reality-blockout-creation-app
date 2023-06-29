@@ -310,6 +310,7 @@ public class SpawnCube : MonoBehaviour
             if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
             {
                 Debug.DrawLine(mainHand.transform.position, hit.point);
+                
                 if(trigger > .1f && hit.transform.tag != "Floor")
                 {
                     selectedObject = hit.transform.gameObject;
@@ -324,6 +325,8 @@ public class SpawnCube : MonoBehaviour
             {
                 if(hit.transform.tag != "Floor")
                 {
+                    Debug.Log(hit.transform.name);
+                    Debug.Log(hit.transform.name);
                     SetOutlineShader(hit.transform.gameObject);
                     if (trigger > .1)
                     {
@@ -359,44 +362,46 @@ public class SpawnCube : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(mainHand.transform.position, hit.point);
-
-            Vector3 pos;
-            pos = hit.point;
-
-            //if(hit.normal.x < 0)    pos += hit.normal;
-            //if(hit.normal.z < 0)    pos += hit.normal;
-
-            pos.x = RoundFloat(pos.x, gridSize.gridSize);
-            pos.y = RoundFloat(pos.y, 1f);
-            pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
-
-            Debug.Log(pos);
-            Debug.Log(hit.normal);
-            if (!hit.transform.CompareTag("ObjectPlacing"))
+            if(hit.transform.tag != "UI")
             {
-                if (!firstCubePlaced)
+                Debug.DrawLine(mainHand.transform.position, hit.point);
+
+                Vector3 pos;
+                pos = hit.point;
+
+                //if(hit.normal.x < 0)    pos += hit.normal;
+                //if(hit.normal.z < 0)    pos += hit.normal;
+
+                pos.x = RoundFloat(pos.x, gridSize.gridSize);
+                pos.y = RoundFloat(pos.y, 1f);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
+
+                Debug.Log(pos);
+                Debug.Log(hit.normal);
+                if (!hit.transform.CompareTag("ObjectPlacing"))
                 {
-                    firstCubePlaced = true;
-                    objectToPlace = CreateObject(ramp, pos, "ObjectPlacing");
+                    if (!firstCubePlaced)
+                    {
+                        firstCubePlaced = true;
+                        objectToPlace = CreateObject(ramp, pos, "ObjectPlacing");
 
+                    }
+                    else if (!secondCubePlaced)
+                    {
+                        objectToPlace.gameObject.transform.position = pos;
+                        objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                    }
                 }
-                else if (!secondCubePlaced)
+                if (export > .0f && !secondCubePlaced)
                 {
-                    objectToPlace.gameObject.transform.position = pos;
-                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                    actionState = State.PLACING;
+                    secondCubePlaced = true;
+                }
+                else if (secondCubePlaced)
+                {
+                    RotingRamp(export);
                 }
             }
-            if (export > .0f && !secondCubePlaced)
-            {
-                actionState = State.PLACING;
-                secondCubePlaced = true;
-            }
-            else if(secondCubePlaced)
-            {
-                RotingRamp(export);
-            }
-
         }
         else
         {
@@ -455,6 +460,8 @@ public class SpawnCube : MonoBehaviour
             {
                 actionState = State.SELECTED;
                 objectTransform.GetComponent<Renderer>().material = materialOnceCreated;
+                objectTransform.tag = "ObjectToExport";
+                objectTransform.gameObject.layer = 0;
                 firstCubePlaced = false;
                 secondCubePlaced = false;
             }
@@ -524,39 +531,41 @@ public class SpawnCube : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(mainHand.transform.position, hit.point);
-            Debug.Log(hit.transform.tag);
-
-
-            Vector3 pos;
-            pos = hit.point;
-            pos.x = RoundFloat(pos.x, gridSize.gridSize);
-            pos.y = RoundFloat(pos.y, 1f);
-            pos.z = RoundFloat(pos.z, gridSize.gridSize);
-
-            if (!hit.transform.CompareTag("ObjectPlacing"))
+            if (hit.transform.tag != "UI")
             {
-                if (!firstCubePlaced)
-                {
-                    firstCubePlaced = true;
-                    secondCubePlaced = false;
-                    objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
-                    cubes.Add(objectToPlace.gameObject);
-                }
-                else
-                {
-                    if (export > .0f && !secondCubePlaced)
-                    {
-                        firstCubePlaced = false;
-                        secondCubePlaced = true;
+                Debug.DrawLine(mainHand.transform.position, hit.point);
+                Debug.Log(hit.transform.tag);
 
-                        actionState = State.PLACING;
+
+                Vector3 pos;
+                pos = hit.point;
+                pos.x = RoundFloat(pos.x, gridSize.gridSize);
+                pos.y = RoundFloat(pos.y, 1f);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize);
+
+                if (!hit.transform.CompareTag("ObjectPlacing"))
+                {
+                    if (!firstCubePlaced)
+                    {
+                        firstCubePlaced = true;
+                        secondCubePlaced = false;
+                        objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
+                        cubes.Add(objectToPlace.gameObject);
                     }
-                    objectToPlace.gameObject.transform.position = pos;
-                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                    else
+                    {
+                        if (export > .0f && !secondCubePlaced)
+                        {
+                            firstCubePlaced = false;
+                            secondCubePlaced = true;
+
+                            actionState = State.PLACING;
+                        }
+                        objectToPlace.gameObject.transform.position = pos;
+                        objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+                    }
                 }
             }
-
         }
         else
         {
@@ -597,41 +606,44 @@ public class SpawnCube : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(mainHand.transform.position, mainHand.transform.forward, out hit, Mathf.Infinity))
         {
-            Debug.DrawLine(mainHand.transform.position, hit.point);
-
-            Vector3 pos;
-            pos = hit.point;
-
-            //if(hit.normal.x < 0)    pos += hit.normal;
-            //if(hit.normal.z < 0)    pos += hit.normal;
-
-            pos.x = RoundFloat(pos.x, gridSize.gridSize);
-            pos.y = RoundFloat(pos.y, 1f);
-            pos.z = RoundFloat(pos.z, gridSize.gridSize);
-            if(!hit.transform.CompareTag("ObjectPlacing"))
+            if (hit.transform.tag != "UI")
             {
-                if (!firstCubePlaced)
-                {
-                    firstCubePlaced = true;
-                    objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
-                    cubes.Add(objectToPlace.gameObject);
+                Debug.DrawLine(mainHand.transform.position, hit.point);
 
-                }
-                else
+                Vector3 pos;
+                pos = hit.point;
+
+                //if(hit.normal.x < 0)    pos += hit.normal;
+                //if(hit.normal.z < 0)    pos += hit.normal;
+
+                pos.x = RoundFloat(pos.x, gridSize.gridSize);
+                pos.y = RoundFloat(pos.y, 1f);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize);
+                if (!hit.transform.CompareTag("ObjectPlacing"))
                 {
-                    if (trigger > .0f && !secondCubePlaced)
+                    if (!firstCubePlaced)
                     {
-                        secondCubePlaced = true;
+                        firstCubePlaced = true;
                         objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
                         cubes.Add(objectToPlace.gameObject);
+
                     }
-                    objectToPlace.gameObject.transform.position = pos;
-                    objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
-                    
+                    else
+                    {
+                        if (trigger > .0f && !secondCubePlaced)
+                        {
+                            secondCubePlaced = true;
+                            objectToPlace = CreateObject(cube, pos, "ObjectPlacing");
+                            cubes.Add(objectToPlace.gameObject);
+                        }
+                        objectToPlace.gameObject.transform.position = pos;
+                        objectToPlace.gameObject.transform.localScale = new Vector3(50f, 50f, 50f);
+
+                    }
                 }
+
+                if (trigger > .0f && firstCubePlaced) actionState = State.PLACING;
             }
-            
-            if(trigger > .0f && firstCubePlaced)    actionState = State.PLACING;
 
         }
         else

@@ -21,7 +21,7 @@ public class LightingManager : MonoBehaviour
         //Material levelMat = new Material();
         RenderSettings.skybox = skybox;
     }
-    private void Update()
+    public void SetDirecLight()
     {
         Quaternion newRotation = Quaternion.Euler(slider.value, 270f, 270f);
         directionalLight.transform.rotation = newRotation;
