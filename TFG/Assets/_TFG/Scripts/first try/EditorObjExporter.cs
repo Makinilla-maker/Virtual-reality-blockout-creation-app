@@ -37,7 +37,11 @@ public class EditorObjExporter : MonoBehaviour
     {
         if(FBX)
         {
-            targetFolder = $"{Application.dataPath}/Exports" + "/" + name + ".fbx";
+            string finalString = Path.GetDirectoryName($"{Application.dataPath}");
+            targetFolder = finalString + "\\Export";
+            if (!CreateFolder())
+                return;
+            targetFolder = targetFolder + "\\" + name + ".fbx";
             List<GameObject> allGo = GameObject.FindGameObjectsWithTag("ObjectToExport").ToList();
             FBXExporter.ExportGameObjToFBX(allGo,targetFolder);
         }

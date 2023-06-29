@@ -90,8 +90,6 @@ public class SpawnCube : MonoBehaviour
     GameObject canvasLeft;
     public MenuManager gridSize;
 
-    GameObject a;
-
     // Start is called before the first frame update
 
     void Start()
@@ -135,7 +133,6 @@ public class SpawnCube : MonoBehaviour
         {
             case "NONE":
                 modeState = Mode.NONE;
-                Destroy(objectToPlace);
                 lineRenderer.enabled = false;
                 break;
             case "CUBE":
@@ -152,27 +149,24 @@ public class SpawnCube : MonoBehaviour
                 break;
             case "MATERIALS":
                 modeState = Mode.MATERIALS;
-                Destroy(objectToPlace);
                 lineRenderer.enabled = true;
                 break;
             case "LIGHT":
                 modeState = Mode.LIGHT;
-                Destroy(objectToPlace);
                 lineRenderer.enabled = false;
                 break;
             case "DELETE":
                 modeState = Mode.DELETE;
-                Destroy(objectToPlace);
                 lineRenderer.enabled = true;
                 break;
             case "RAMP":
                 modeState = Mode.RAMP;
-                Destroy(objectToPlace);
                 lineRenderer.enabled = true;
                 break;
         }
 
         actionState = State.NONE;
+        Destroy(objectToPlace);
         Destroy(objectToInstantiate);
         DestroyListGO(cubes);
 
@@ -423,12 +417,14 @@ public class SpawnCube : MonoBehaviour
                 pos = hit.point;
                 pos.x = RoundFloat(pos.x, gridSize.gridSize);
                 pos.y = RoundFloat(pos.y, 1f);
-                pos.z = RoundFloat(pos.z, gridSize.gridSize);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
 
                 Vector3 vectorDist = pos - objectToPlace.transform.position;
                 float distanceZ = Mathf.Abs(vectorDist.z);
                 float distanceY = Mathf.Abs(vectorDist.y);
                 float distanceX = Mathf.Abs(vectorDist.x);
+
+                Debug.Log("Esta es la ditnacia_______________________: " + distanceX + " " + distanceY + " " + distanceZ);
 
 
                 // Obtener la rotación hacia el objetivo
@@ -448,6 +444,8 @@ public class SpawnCube : MonoBehaviour
                 if (distanceX * 50 < 50) distanceX = 50;
                 if (distanceY * 50 < 50) distanceY = 50;
                 if (distanceZ * 50 < 50) distanceZ = 50;
+
+                if(distanceX > distanceZ) distanceZ = distanceX;
 
                 newScale = new Vector3(objectTransform.localScale.x, distanceZ, distanceY);
                 Debug.Log(newScale);
@@ -610,8 +608,6 @@ public class SpawnCube : MonoBehaviour
             pos.x = RoundFloat(pos.x, gridSize.gridSize);
             pos.y = RoundFloat(pos.y, 1f);
             pos.z = RoundFloat(pos.z, gridSize.gridSize);
-            Debug.Log(pos);
-            Debug.Log(hit.normal);
             if(!hit.transform.CompareTag("ObjectPlacing"))
             {
                 if (!firstCubePlaced)
@@ -645,13 +641,6 @@ public class SpawnCube : MonoBehaviour
     }
     public void SetPlayerSpeed(int number)
     {
-        if (mainHand.name == "LeftHand Controller")
-            a = GameObject.Find("VelocityPlayerNumberRight");
-        else
-            a = GameObject.Find("VelocityPlayerNumberLeft");
-
-        //otherHand.transform.Find("VelocityPlayerNumber").gameObject;
-        //a.GetComponent<TMP_Text>().text = number.ToString();
 
         float speed = GetComponent<ContinuousMoveProviderBase>().moveSpeed + number;
         GetComponent<ContinuousMoveProviderBase>().moveSpeed = speed;
@@ -721,9 +710,8 @@ public class SpawnCube : MonoBehaviour
             Destroy(cube);
         }
         cubes.Clear();
-    }
-    
-List<Vector3> CreateMeshVoxel(int mx, int mz)
+    }    
+    List<Vector3> CreateMeshVoxel(int mx, int mz)
     {
         List<Vector3> cubePosition = new List<Vector3>();
 
