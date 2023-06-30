@@ -5467,7 +5467,7 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: -8198699208435500284, guid: c348712bda248c246b8c49b3db54643f,
+    m_Reference: {fileID: -6493913391331992944, guid: c348712bda248c246b8c49b3db54643f,
       type: 3}
   triggerRight:
     m_UseReference: 1
@@ -5512,6 +5512,7 @@ MonoBehaviour:
   cillinder: {fileID: 5975151396192704408, guid: 6d71424fe55cfb04bb92437d1bb3e285,
     type: 3}
   ramp: {fileID: 8598135859883538398, guid: d429be29791d0dc4d8becfd7beae5d63, type: 3}
+  ramp2: {fileID: 0}
   voxelPrfab: {fileID: 5719250083289484641, guid: f43f2fbfad340a8459d5bf01b079ad35,
     type: 3}
   placeTransform: {fileID: 2041044850}
@@ -5542,7 +5543,7 @@ MonoBehaviour:
   m_TurnAmount: 45
   m_DebounceTime: 0.5
   m_EnableTurnLeftRight: 1
-  m_EnableTurnAround: 1
+  m_EnableTurnAround: 0
   m_DelayTime: 0
   m_LeftHandSnapTurnAction:
     m_UseReference: 0
@@ -5567,7 +5568,7 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: -6493913391331992944, guid: c348712bda248c246b8c49b3db54643f,
+    m_Reference: {fileID: -8198699208435500284, guid: c348712bda248c246b8c49b3db54643f,
       type: 3}
 --- !u!114 &295541497
 MonoBehaviour:
@@ -33298,6 +33299,7 @@ MonoBehaviour:
   cillinder: {fileID: 5975151396192704408, guid: 6d71424fe55cfb04bb92437d1bb3e285,
     type: 3}
   ramp: {fileID: 0}
+  ramp2: {fileID: 0}
   voxelPrfab: {fileID: 5719250083289484641, guid: f43f2fbfad340a8459d5bf01b079ad35,
     type: 3}
   placeTransform: {fileID: 2041044850}
