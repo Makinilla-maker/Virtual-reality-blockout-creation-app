@@ -51,6 +51,7 @@ public class SpawnCube : MonoBehaviour
     public GameObject cube;
     public GameObject cillinder;
     public GameObject ramp;
+    public GameObject ramp2;
     public GameObject voxelPrfab;
     public Transform placeTransform;
     public Material materialOnceCreated;
@@ -291,12 +292,6 @@ public class SpawnCube : MonoBehaviour
                 actionState = State.SELECTED;
             }
         }
-        if (joystickUpValue.y > .1f)
-        {
-            Debug.Log(joystickUpValue);
-            GetComponent<CharacterController>().Move(joystickUpValue/3);
-        }
-
         else if (modeState == Mode.LIGHT)
         {
             if (trigger > .1f)
@@ -344,6 +339,11 @@ public class SpawnCube : MonoBehaviour
             //objectToInstantiate.gameObject.transform.position = placeTransform.position;
             //objectToInstantiate.gameObject.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
         }
+        if (joystickUpValue.y > .2f || joystickUpValue.y < -0.2f)
+        {
+            Vector3 up = new Vector3(0, joystickUpValue.y, 0);
+            GetComponent<CharacterController>().Move(up);
+        }
     }
     void SetOutlineShader(GameObject so)
     {
@@ -369,15 +369,9 @@ public class SpawnCube : MonoBehaviour
                 Vector3 pos;
                 pos = hit.point;
 
-                //if(hit.normal.x < 0)    pos += hit.normal;
-                //if(hit.normal.z < 0)    pos += hit.normal;
-
                 pos.x = RoundFloat(pos.x, gridSize.gridSize);
                 pos.y = RoundFloat(pos.y, 1f);
                 pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
-
-                Debug.Log(pos);
-                Debug.Log(hit.normal);
                 if (!hit.transform.CompareTag("ObjectPlacing"))
                 {
                     if (!firstCubePlaced)
@@ -420,9 +414,9 @@ public class SpawnCube : MonoBehaviour
                 Debug.Log(hit.point);
                 Vector3 pos;
                 pos = hit.point;
-                pos.x = RoundFloat(pos.x, gridSize.gridSize);
+                pos.x = RoundFloat(pos.x, gridSize.gridSize);// - 0.5f;
                 pos.y = RoundFloat(pos.y, 1f);
-                pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
+                pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;// - 0.5f;
 
                 Vector3 vectorDist = pos - objectToPlace.transform.position;
                 float distanceZ = Mathf.Abs(vectorDist.z);
@@ -653,9 +647,9 @@ public class SpawnCube : MonoBehaviour
     }
     public void SetPlayerSpeed(int number)
     {
-
-        float speed = GetComponent<ContinuousMoveProviderBase>().moveSpeed + number;
-        GetComponent<ContinuousMoveProviderBase>().moveSpeed = speed;
+        GetComponent<ContinuousMoveProviderBase>().moveSpeed += number;
+        if (GetComponent<ContinuousMoveProviderBase>().moveSpeed < 1)
+            GetComponent<ContinuousMoveProviderBase>().moveSpeed = 1;
     }    
     public void Exit()
     {
