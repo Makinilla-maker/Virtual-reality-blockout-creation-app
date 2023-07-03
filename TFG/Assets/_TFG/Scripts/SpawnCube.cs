@@ -418,7 +418,9 @@ public class SpawnCube : MonoBehaviour
                 pos.y = RoundFloat(pos.y, 1f);
                 pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;// - 0.5f;
 
-                Vector3 vectorDist = pos - objectToPlace.transform.position;
+                Vector3 newVectWithHeigh = hit.point;
+                newVectWithHeigh.y = pos.y;
+                Vector3 vectorDist = newVectWithHeigh - objectToPlace.transform.position;
                 float distanceZ = Mathf.Abs(vectorDist.z);
                 float distanceY = Mathf.Abs(vectorDist.y);
                 float distanceX = Mathf.Abs(vectorDist.x);
