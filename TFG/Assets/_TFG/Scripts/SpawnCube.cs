@@ -278,7 +278,7 @@ public class SpawnCube : MonoBehaviour
                 float yScale = GetCubeHeight(mainHand.transform.position);
 
                 Vector3 newScale = voxel.transform.localScale;
-                newScale.y = RoundFloat(yScale, 1f);
+                newScale.y = RoundFloat(yScale, 1f, true);
                 voxel.transform.localScale = newScale;
                 //StartCoroutine(ScaleUp());
 
@@ -369,9 +369,9 @@ public class SpawnCube : MonoBehaviour
                 Vector3 pos;
                 pos = hit.point;
 
-                pos.x = RoundFloat(pos.x, gridSize.gridSize);
-                pos.y = RoundFloat(pos.y, 1f);
-                pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;
+                pos.x = RoundFloat(pos.x, gridSize.gridSize, false);
+                pos.y = RoundFloat(pos.y, 1f, true);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize, false) - 0.5f;
                 if (!hit.transform.CompareTag("ObjectPlacing"))
                 {
                     if (!firstCubePlaced)
@@ -414,9 +414,9 @@ public class SpawnCube : MonoBehaviour
                 Debug.Log(hit.point);
                 Vector3 pos;
                 pos = hit.point;
-                pos.x = RoundFloat(pos.x, gridSize.gridSize);// - 0.5f;
-                pos.y = RoundFloat(pos.y, 1f);
-                pos.z = RoundFloat(pos.z, gridSize.gridSize) - 0.5f;// - 0.5f;
+                pos.x = RoundFloat(pos.x, gridSize.gridSize, false);// - 0.5f;
+                pos.y = RoundFloat(pos.y, 1f, true);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize,false) - 0.5f;// - 0.5f;
 
                 Vector3 newVectWithHeigh = hit.point;
                 newVectWithHeigh.y = pos.y;
@@ -476,9 +476,9 @@ public class SpawnCube : MonoBehaviour
 
             Vector3 pos;
             pos = hit.point;
-            pos.x = RoundFloat(pos.x, gridSize.gridSize);
-            pos.y = RoundFloat(pos.y, 1f);
-            pos.z = RoundFloat(pos.z, gridSize.gridSize);
+            pos.x = RoundFloat(pos.x, gridSize.gridSize, false);
+            pos.y = RoundFloat(pos.y, 1f, true);
+            pos.z = RoundFloat(pos.z, gridSize.gridSize, false);
             //transform.position = pos;
 
 
@@ -535,9 +535,9 @@ public class SpawnCube : MonoBehaviour
 
                 Vector3 pos;
                 pos = hit.point;
-                pos.x = RoundFloat(pos.x, gridSize.gridSize);
-                pos.y = RoundFloat(pos.y, 1f);
-                pos.z = RoundFloat(pos.z, gridSize.gridSize);
+                pos.x = RoundFloat(pos.x, 1f, false);
+                pos.y = RoundFloat(pos.y, 1f, true);
+                pos.z = RoundFloat(pos.z, 1f, false);
 
                 if (!hit.transform.CompareTag("ObjectPlacing"))
                 {
@@ -568,10 +568,17 @@ public class SpawnCube : MonoBehaviour
             Debug.Log("No collision detected.");
         }
     }
-    float RoundFloat(float valueToRound, float valeRounded)
+    float RoundFloat(float valueToRound, float valueRounded, bool yAxis)
     {
-        float value;
-        return value = Mathf.RoundToInt(valueToRound / gridSize.gridSize) * valeRounded;
+        if(yAxis)
+        {
+            return Mathf.RoundToInt(valueToRound / gridSize.gridSize) * valueRounded;
+        }
+        else
+        {
+            float roundedValue = Mathf.Floor(valueToRound / valueRounded);
+            return roundedValue * valueRounded;
+        }            
     }
     void CreatingVoxelCustomMesh()
     {
@@ -612,9 +619,12 @@ public class SpawnCube : MonoBehaviour
                 //if(hit.normal.x < 0)    pos += hit.normal;
                 //if(hit.normal.z < 0)    pos += hit.normal;
 
-                pos.x = RoundFloat(pos.x, gridSize.gridSize);
-                pos.y = RoundFloat(pos.y, 1f);
-                pos.z = RoundFloat(pos.z, gridSize.gridSize);
+                pos.x = RoundFloat(pos.x, gridSize.gridSize, false);
+                pos.y = RoundFloat(pos.y, 1f,true);
+                pos.z = RoundFloat(pos.z, gridSize.gridSize, false);
+                Debug.Log(hit.point);
+                Debug.Log(pos);
+                Debug.Log(hit.normal);
                 if (!hit.transform.CompareTag("ObjectPlacing"))
                 {
                     if (!firstCubePlaced)
