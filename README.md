@@ -16,7 +16,13 @@ Welcome to the BlockoutVR repository, an innovative blockout creation app design
 
 - **Export and Compatibility:** Export your designs in popular formats for further use in game engines and 3D modeling tools. 
 
+## Controls
+- With the left joystick you can move around the world. In case you get dizzy, you can use the menus to change the type of movement to teleportation.
 
+- To move with tp, just point the joystick to the place where you want the camera to go and press the grab button.
+
+- If you press the joystick you will activate/deactivate the gravity to move around the world.
+  
 ## License
 
 This project is under the MIT License, which means you can use, modify, and distribute the software according to the terms of the license.
